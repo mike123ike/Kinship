@@ -4,8 +4,6 @@ import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.Exclude;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 
 public class Issue {
@@ -19,6 +17,7 @@ public class Issue {
     private String id;
     private String title;
     private String description;
+    private String reportedBy;
     private Status status;
     private Category category;
     private String photoURL;
@@ -32,10 +31,11 @@ public class Issue {
         votes = new HashMap<>();
     }
 
-    public Issue(String t, String d, Status s, Category c, String p, double lat, double lon) {
+    public Issue(String t, String d, String r, Status s, Category c, String p, double lat, double lon) {
         this();
         title = t;
         description = d;
+        reportedBy = r;
         status = s;
         category = c;
         photoURL = p;
@@ -53,6 +53,9 @@ public class Issue {
 
     public String getDescription() {return description;}
     public void setDescription(String description) {this.description = description;}
+
+    public String getReportedBy() {return reportedBy;}
+    public void setReportedBy(String reportedBy) {this.reportedBy = reportedBy;}
 
     public Status getStatus() {return status;}
     public void setStatus(Status status) {this.status = status;}
@@ -79,7 +82,7 @@ public class Issue {
     public void setVotes(Map<String, Boolean> votes) {this.votes = votes;}
 
     @Exclude
-    public Boolean userVote(String uid) {
+    public Boolean getUserVote(String uid) {
         return votes.get(uid);
     }
 }
