@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.pkg.civicfix"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -78,4 +78,6 @@ dependencies {
 
 // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.6")
+
+    implementation("androidx.appcompat:appcompat:1.6.1")
 }
