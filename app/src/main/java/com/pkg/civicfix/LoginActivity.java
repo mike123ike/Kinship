@@ -1,7 +1,6 @@
 package com.pkg.civicfix;
 
 import androidx.annotation.NonNull;
-import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
 
 import androidx.credentials.exceptions.GetCredentialException;
@@ -17,11 +16,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.credentials.CredentialManagerCallback;
-import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
@@ -49,8 +46,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         public void onResult(GetCredentialResponse result) {
             try {
-                CustomCredential cred = (CustomCredential) result.getCredential();
-                linkToFirebase(GoogleIdTokenCredential.createFrom(cred.getData()).getIdToken());
+                linkToFirebase(GoogleIdTokenCredential.createFrom(result.getCredential().getData()).getIdToken());
             } catch (Exception e) {
                 showToast("Token Parsing Error");
                 resetUI();
@@ -68,7 +64,6 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         auth = FirebaseAuth.getInstance();
-        auth.signOut();
         if (auth.getCurrentUser() != null) {
             goToMainScreen();
             return;
@@ -84,11 +79,11 @@ public class LoginActivity extends AppCompatActivity {
                 .setFilterByAuthorizedAccounts(false).build();
         request = new GetCredentialRequest.Builder().addCredentialOption(options).build();
         db = FirebaseFirestore.getInstance();
-        btnSignin.setOnClickListener((View v) -> executeSignin());
+        btnSignin.setOnClickListener(this::executeSignin);
         cancel = new CancellationSignal();
     }
 
-    private void executeSignin() {
+    private void executeSignin(View v) {
         cancel.cancel();
         cancel = new CancellationSignal();
         progressBar.setVisibility(View.VISIBLE);
@@ -98,7 +93,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void linkToFirebase(String token) {
         AuthCredential credential = GoogleAuthProvider.getCredential(token, null);
-        auth.signInWithCredential(credential).addOnCompleteListener(this::onSigninComplete);
+        auth.signInWithCredential(credential).addOnCompleteListener(this, this::onSigninComplete);
     }
 
     private void resetUI() {
@@ -120,11 +115,11 @@ public class LoginActivity extends AppCompatActivity {
                 map.put("isOfficial", false);
                 map.put("displayName", user.getDisplayName());
                 db.collection("users").document(user.getUid()).set(map)
-                        .addOnSuccessListener((Void v) -> {
+                        .addOnSuccessListener(this, (Void v) -> {
                             showToast("Account Created Successfully");
                             goToMainScreen();
                         })
-                        .addOnFailureListener((Exception e) -> {
+                        .addOnFailureListener(this, (Exception e) -> {
                             resetUI();
                             showToast("Account Creation Failure: " + e.getLocalizedMessage());
                         });
