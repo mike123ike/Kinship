@@ -10,7 +10,6 @@ import android.os.CancellationSignal;
 import android.view.View;
 
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -40,7 +39,6 @@ public class LoginActivity extends AppCompatActivity {
     private CancellationSignal cancel;
 
     private Button btnSignin;
-    private ProgressBar progressBar;
 
     private class Callback implements CredentialManagerCallback<GetCredentialResponse, GetCredentialException> {
         @Override
@@ -70,8 +68,6 @@ public class LoginActivity extends AppCompatActivity {
         }
         setContentView(R.layout.login_activity);
         btnSignin = findViewById(R.id.btn_signin);
-        progressBar = findViewById(R.id.progress_bar);
-        progressBar.setVisibility(View.GONE);
         manager = CredentialManager.create(this);
         GetGoogleIdOption options = new GetGoogleIdOption
                 .Builder()
@@ -86,7 +82,6 @@ public class LoginActivity extends AppCompatActivity {
     private void executeSignin(View v) {
         cancel.cancel();
         cancel = new CancellationSignal();
-        progressBar.setVisibility(View.VISIBLE);
         btnSignin.setEnabled(false);
         manager.getCredentialAsync(this, request, cancel, getMainExecutor(), new Callback());
     }
@@ -97,7 +92,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void resetUI() {
-        progressBar.setVisibility(View.GONE);
         btnSignin.setEnabled(true);
     }
 
