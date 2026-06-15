@@ -20,12 +20,12 @@
             android:layout_width="22dp"
             android:layout_height="22dp"
             app:tint="@color/primaryLight"
-            android:contentDescription="Kinship logo" />
+            android:contentDescription="CivicFix logo" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Kinship"
+            android:text="CivicFix"
             android:textColor="@color/primaryLight"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -110,7 +110,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="© 2024 Kinship Community Safety. All rights reserved."
+            android:text="© 2024 CivicFix Community Safety. All rights reserved."
             android:textColor="#9CA3AF"
             android:textSize="11sp"
             android:gravity="center"
