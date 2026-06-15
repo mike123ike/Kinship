@@ -76,11 +76,10 @@ public class LoginActivity extends AppCompatActivity {
         request = new GetCredentialRequest.Builder().addCredentialOption(options).build();
         db = FirebaseFirestore.getInstance();
         btnSignin.setOnClickListener(this::executeSignin);
-        cancel = new CancellationSignal();
     }
 
     private void executeSignin(View v) {
-        cancel.cancel();
+        if (cancel != null) cancel.cancel();
         cancel = new CancellationSignal();
         btnSignin.setEnabled(false);
         manager.getCredentialAsync(this, request, cancel, getMainExecutor(), new Callback());
@@ -137,6 +136,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        cancel.cancel();
+        if (cancel != null) cancel.cancel();
     }
 }
