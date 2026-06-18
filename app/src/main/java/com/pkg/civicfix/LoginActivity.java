@@ -1,19 +1,17 @@
 package com.pkg.civicfix;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.credentials.CredentialManager;
 
 import androidx.credentials.exceptions.GetCredentialException;
 import android.os.Bundle;
-import android.content.Intent;
 import android.os.CancellationSignal;
 import android.view.View;
 
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
@@ -26,12 +24,12 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.pkg.civicfix.base.CivicFixActivity;
+import com.pkg.civicfix.model.User;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends CivicFixActivity {
     private CredentialManager manager;
     private GetCredentialRequest request;
     private FirebaseAuth auth;
@@ -61,20 +59,21 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.login_activity);
         auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        btnSignin = findViewById(R.id.btn_signin);
         if (auth.getCurrentUser() != null) {
-            goToMainScreen();
+            btnSignin.setEnabled(false);
+            applyDarkMode();
             return;
         }
-        setContentView(R.layout.login_activity);
-        btnSignin = findViewById(R.id.btn_signin);
         manager = CredentialManager.create(this);
         GetGoogleIdOption options = new GetGoogleIdOption
                 .Builder()
                 .setServerClientId("389842618012-hhsqficg7ubd1psh60t9vmvj2nq2o3g3.apps.googleusercontent.com")
                 .setFilterByAuthorizedAccounts(false).build();
         request = new GetCredentialRequest.Builder().addCredentialOption(options).build();
-        db = FirebaseFirestore.getInstance();
         btnSignin.setOnClickListener(this::executeSignin);
     }
 
@@ -94,20 +93,13 @@ public class LoginActivity extends AppCompatActivity {
         btnSignin.setEnabled(true);
     }
 
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
     private void onSigninComplete(Task<AuthResult> task) {
         if (task.isSuccessful()) {
             AuthResult result = task.getResult();
-            FirebaseUser user = auth.getCurrentUser();
+            FirebaseUser user = result.getUser();
             if (result.getAdditionalUserInfo().isNewUser()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("email", user.getEmail());
-                map.put("isOfficial", false);
-                map.put("displayName", user.getDisplayName());
-                db.collection("users").document(user.getUid()).set(map)
+                User profile = new User(user.getUid(), user.getDisplayName(), user.getEmail());
+                db.collection("users").document(user.getUid()).set(profile)
                         .addOnSuccessListener(this, (Void v) -> {
                             showToast("Account Created Successfully");
                             goToMainScreen();
@@ -117,8 +109,7 @@ public class LoginActivity extends AppCompatActivity {
                             showToast("Account Creation Failure: " + e.getLocalizedMessage());
                         });
             } else {
-                showToast("Welcome Back");
-                goToMainScreen();
+                applyDarkMode();
             }
         } else {
             resetUI();
@@ -128,9 +119,29 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goToMainScreen() {
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
-        finish();
+        goToActivity(MainActivity.class, true);
+    }
+
+    private void applyDarkMode() {
+        String uid = auth.getUid();
+        if (uid == null) {
+            showToast("Welcome Back");
+            goToMainScreen();
+            return;
+        }
+        db.collection("users").document(uid).get().addOnSuccessListener(this, (DocumentSnapshot s) -> {
+            if (s.exists()) {
+                User profile = s.toObject(User.class);
+                if (profile != null && profile.isDarkMode() && AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_YES) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                }
+            }
+            showToast("Welcome Back");
+            goToMainScreen();
+        }).addOnFailureListener(this, (Exception e) -> {
+            showToast("Welcome Back");
+            goToMainScreen();
+        });
     }
 
     @Override
