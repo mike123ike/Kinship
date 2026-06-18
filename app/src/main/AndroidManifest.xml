@@ -32,6 +32,14 @@
             android:theme="@style/Theme.CivicFix">
         </activity>
 
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:configChanges="uiMode"
+            android:label="CivicFix Settings"
+            android:theme="@style/Theme.CivicFix">
+        </activity>
+
     </application>
 
 </manifest>
