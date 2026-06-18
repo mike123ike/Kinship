@@ -20,9 +20,11 @@ public class User {
 
     public boolean isAnonymousReporting() {return anonymousReporting;}
     public void setAnonymousReporting(boolean anonymousReporting) {this.anonymousReporting = anonymousReporting;}
+    public void toggleAnonymousReporting() {anonymousReporting = !anonymousReporting;}
 
     public boolean isDarkMode() {return darkMode;}
     public void setDarkMode(boolean darkMode) {this.darkMode = darkMode;}
+    public void toggleDarkMode() {darkMode = !darkMode;}
 
     public boolean isOfficial() {return isOfficial;}
     public void setOfficial(boolean official) {isOfficial = official;}
