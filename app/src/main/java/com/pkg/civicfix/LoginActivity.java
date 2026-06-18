@@ -6,15 +6,12 @@ import androidx.credentials.CredentialManager;
 
 import androidx.credentials.exceptions.GetCredentialException;
 import android.os.Bundle;
-import android.content.Intent;
 import android.os.CancellationSignal;
 import android.view.View;
 
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
@@ -29,9 +26,10 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.pkg.civicfix.base.CivicFixActivity;
 import com.pkg.civicfix.model.User;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends CivicFixActivity {
     private CredentialManager manager;
     private GetCredentialRequest request;
     private FirebaseAuth auth;
@@ -95,10 +93,6 @@ public class LoginActivity extends AppCompatActivity {
         btnSignin.setEnabled(true);
     }
 
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
     private void onSigninComplete(Task<AuthResult> task) {
         if (task.isSuccessful()) {
             AuthResult result = task.getResult();
@@ -125,9 +119,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goToMainScreen() {
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
-        finish();
+        goToActivity(MainActivity.class, true);
     }
 
     private void applyDarkMode() {
