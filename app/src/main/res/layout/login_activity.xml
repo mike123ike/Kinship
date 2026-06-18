@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="#F0F0F8">
 
-    <!-- Top Logo Row -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -33,7 +32,6 @@
             android:layout_marginStart="6dp" />
     </LinearLayout>
 
-    <!-- Center Card -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -88,16 +86,15 @@
                     app:backgroundTint="@color/primaryLight"
                     app:cornerRadius="10dp"
                     app:icon="@drawable/ic_google"
-                    app:iconTint="@null"
                     app:iconGravity="textStart"
-                    app:iconPadding="12dp" />
+                    app:iconPadding="12dp"
+                    app:iconTint="@null" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
     </LinearLayout>
 
-    <!-- Footer -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

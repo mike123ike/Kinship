@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.widget.SwitchCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -21,11 +22,11 @@ public class SettingsActivity extends CivicFixActivity {
     private FirebaseAuth auth;
     private String uid;
     private FirebaseFirestore db;
-    private Button btnLogout;
+    private View btnLogout;
+
+    private Toolbar toolbar;
     private SwitchCompat toggleDarkMode;
     private SwitchCompat toggleAnonymousReporting;
-    private TextView textName;
-    private TextView textEmail;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -33,9 +34,9 @@ public class SettingsActivity extends CivicFixActivity {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         setContentView(R.layout.settings_activity);
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         btnLogout = findViewById(R.id.btn_logout);
-        textName = findViewById(R.id.text_name);
-        textEmail = findViewById(R.id.text_email);
         toggleDarkMode = findViewById(R.id.toggle_dark_mode);
         toggleAnonymousReporting = findViewById(R.id.toggle_anonymous_reporting);
         uid = auth.getUid();
@@ -50,6 +51,9 @@ public class SettingsActivity extends CivicFixActivity {
             showToast("Logging out");
             goToActivity(LoginActivity.class, true);
         });
+        toolbar.setNavigationOnClickListener((View v) -> {
+            finish();
+        });
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(this, (DocumentSnapshot s) -> {
                     if (s.exists()) {
@@ -63,8 +67,6 @@ public class SettingsActivity extends CivicFixActivity {
     }
 
     private void initializeWidgetStates(User user) {
-        textName.setText(user.getDisplayName());
-        textEmail.setText(user.getEmail());
         toggleDarkMode.setChecked(user.isDarkMode());
         toggleAnonymousReporting.setChecked(user.isAnonymousReporting());
         toggleDarkMode.setOnCheckedChangeListener((CompoundButton b, boolean isChecked) -> {
