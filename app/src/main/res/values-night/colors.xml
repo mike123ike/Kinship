@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- dark -->
 <resources>
-    <color name="primary">#FF2D5A27</color>
+    <color name="primary">#A1D494</color>
     <color name="secondary">#FFE8F0E6</color>
     <color name="tertiary">#DCE2F0</color>
     <color name="background">#121C2A</color>
