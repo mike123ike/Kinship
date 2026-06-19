@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dark -->
+<resources>
+    <color name="primary">#FF2D5A27</color>
+    <color name="secondary">#FFE8F0E6</color>
+    <color name="tertiary">#DCE2F0</color>
+    <color name="background">#121C2A</color>
+    <color name="textSecondary">#C2C9BB</color>
+    <color name="cardBackground">#222C3B</color>
+    <color name="alertText">#FFDAD6</color>
+    <color name="toolbar">#0C1420</color>
+</resources>

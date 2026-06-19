@@ -4,26 +4,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="@color/background">
 
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/white"
+        android:background="@color/toolbar"
         app:navigationIcon="@drawable/ic_arrow_back"
-        app:navigationIconTint="@color/primaryLight"
+        app:navigationIconTint="@color/tertiary"
         app:title="Settings"
         android:textStyle="bold"
-        app:titleTextColor="@color/primaryLight">
+        app:titleTextColor="@color/tertiary">
 
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_gravity="end"
             android:layout_marginEnd="16dp"
-            app:tint="@color/primaryLight" />
+            app:tint="@color/primary" />
     </androidx.appcompat.widget.Toolbar>
 
     <ScrollView
@@ -41,7 +41,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="APPEARANCE"
-                android:textColor="#9CA3AF"
+                android:textColor="@color/textSecondary"
                 android:textSize="11sp"
                 android:letterSpacing="0.1"
                 android:textStyle="bold"
@@ -53,7 +53,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/cardBackground"
                 android:layout_marginBottom="20dp">
 
                 <LinearLayout
@@ -81,7 +81,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Dark Mode"
-                        android:textColor="@color/tertiaryLight"
+                        android:textColor="@color/tertiary"
                         android:textSize="15sp" />
 
                     <androidx.appcompat.widget.SwitchCompat
@@ -96,7 +96,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="PREFERENCES"
-                android:textColor="#9CA3AF"
+                android:textColor="@color/textSecondary"
                 android:textSize="11sp"
                 android:letterSpacing="0.1"
                 android:textStyle="bold"
@@ -108,7 +108,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/cardBackground"
                 android:layout_marginBottom="20dp">
 
                 <LinearLayout
@@ -142,21 +142,21 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Notifications"
-                            android:textColor="@color/tertiaryLight"
+                            android:textColor="@color/tertiary"
                             android:textSize="15sp" />
 
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:src="@drawable/ic_chevron_right"
-                            app:tint="#9CA3AF" />
+                            app:tint="@color/textSecondary" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginStart="66dp"
-                        android:background="#F3F4F6" />
+                        android:background="@color/cardBackground" />
 
                     <!-- Privacy & Safety Row -->
                     <LinearLayout
@@ -176,7 +176,7 @@
                                 android:layout_height="20dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_privacy"
-                                app:tint="@color/primaryLight" />
+                                app:tint="@color/primary" />
                         </FrameLayout>
 
                         <TextView
@@ -184,21 +184,21 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Privacy &amp; Safety"
-                            android:textColor="@color/tertiaryLight"
+                            android:textColor="@color/tertiary"
                             android:textSize="15sp" />
 
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:src="@drawable/ic_chevron_right"
-                            app:tint="#9CA3AF" />
+                            app:tint="@color/textSecondary" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginStart="66dp"
-                        android:background="#F3F4F6" />
+                        android:background="@color/cardBackground" />
 
                     <!-- Anonymous Reporting Row -->
                     <LinearLayout
@@ -230,13 +230,13 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Anonymous Reporting"
-                                android:textColor="@color/tertiaryLight"
+                                android:textColor="@color/tertiary"
                                 android:textSize="15sp" />
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Hide your identity when submitting reports"
-                                android:textColor="#9CA3AF"
+                                android:textColor="@color/textSecondary"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
@@ -253,7 +253,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ABOUT CIVIC FIX"
-                android:textColor="#9CA3AF"
+                android:textColor="@color/textSecondary"
                 android:textSize="11sp"
                 android:letterSpacing="0.1"
                 android:textStyle="bold"
@@ -265,7 +265,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/cardBackground"
                 android:layout_marginBottom="20dp">
 
                 <LinearLayout
@@ -291,15 +291,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Civic Fix"
-                        android:textColor="@color/tertiaryLight"
+                        android:textColor="@color/tertiary"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Version 2.4.0 (Community Edition)"
-                        android:textColor="#9CA3AF"
+                        android:text="v1.0.0 (Beta)"
+                        android:textColor="@color/textSecondary"
                         android:textSize="12sp"
                         android:layout_marginBottom="12dp" />
 
@@ -307,7 +307,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-                        android:textColor="#6B7280"
+                        android:textColor="@color/textSecondary"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:layout_marginBottom="16dp" />
@@ -320,7 +320,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Terms"
-                            android:textColor="#9CA3AF"
+                            android:textColor="@color/textSecondary"
                             android:textSize="12sp"
                             android:clickable="true"
                             android:focusable="true" />
@@ -328,13 +328,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="   Support   "
-                            android:textColor="#9CA3AF"
+                            android:textColor="@color/textSecondary"
                             android:textSize="12sp" />
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Credits"
-                            android:textColor="#9CA3AF"
+                            android:textColor="@color/textSecondary"
                             android:textSize="12sp"
                             android:clickable="true"
                             android:focusable="true" />
@@ -348,7 +348,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/cardBackground"
                 android:layout_marginBottom="16dp">
 
                 <LinearLayout
@@ -380,7 +380,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Logout"
-                        android:textColor="#93000A"
+                        android:textColor="@color/alertText"
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
@@ -388,7 +388,7 @@
                         android:layout_width="18dp"
                         android:layout_height="18dp"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="#93000A" />
+                        app:tint="@color/alertText" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
