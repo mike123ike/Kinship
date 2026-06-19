@@ -10,6 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.widget.SwitchCompat;
+import android.content.res.ColorStateList;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -54,6 +56,9 @@ public class SettingsActivity extends CivicFixActivity {
         toolbar.setNavigationOnClickListener((View v) -> {
             finish();
         });
+        toolbar.getNavigationIcon().setTintList(
+                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.tertiary))
+        );
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(this, (DocumentSnapshot s) -> {
                     if (s.exists()) {

@@ -23,7 +23,7 @@
             android:layout_height="24dp"
             android:layout_gravity="end"
             android:layout_marginEnd="16dp"
-            app:tint="@color/primary" />
+            app:tint="#FF2D5A27" />
     </androidx.appcompat.widget.Toolbar>
 
     <ScrollView
@@ -176,7 +176,7 @@
                                 android:layout_height="20dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_privacy"
-                                app:tint="@color/primary" />
+                                app:tint="#FF2D5A27" />
                         </FrameLayout>
 
                         <TextView
