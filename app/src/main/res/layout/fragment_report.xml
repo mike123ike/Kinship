@@ -1,13 +1,515 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <TextView
-        android:id="@+id/myTextView"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Report Fragment" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-</FrameLayout>
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Submit Incident Report"
+            android:textColor="@color/tertiary"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Provide detailed information to alert your local community and authorities."
+            android:textColor="@color/textSecondary"
+            android:textSize="13sp"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Photo Upload Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/cardBackground"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Image Preview Area -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Background image (uploaded photo, whited out) -->
+                    <ImageView
+                        android:id="@+id/iv_photo_preview"
+                        android:layout_width="match_parent"
+                        android:layout_height="180dp"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone"
+                        android:alpha="0.35" />
+
+                    <!-- Dashed border with everything inside -->
+                    <RelativeLayout
+                        android:id="@+id/layout_upload_prompt"
+                        android:layout_width="match_parent"
+                        android:layout_height="300dp"
+                        android:background="@drawable/bg_dashed_border"
+                        android:padding="20dp">
+
+                        <!-- Icon + Text centered in the middle -->
+                        <LinearLayout
+                            android:id="@+id/layout_upload_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:layout_centerInParent="true">
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_add_photo"
+                                app:tint="@color/primary"
+                                android:layout_gravity="center"
+                                android:layout_marginBottom="8dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Upload Incident Evidence"
+                                android:textColor="@color/tertiary"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Drag and drop or click to browse camera/library"
+                                android:textColor="@color/textSecondary"
+                                android:textSize="12sp"
+                                android:gravity="center" />
+                        </LinearLayout>
+
+                        <!-- Buttons pinned to bottom -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_alignParentBottom="true">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_library"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:text="Library"
+                                android:textSize="13sp"
+                                android:textAllCaps="false"
+                                android:textColor="@color/tertiary"
+                                app:backgroundTint="@color/button"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/ic_photo_library"
+                                app:iconTint="@color/primary"
+                                app:iconGravity="textStart"
+                                android:layout_marginEnd="8dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_camera"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:text="Camera"
+                                android:textSize="13sp"
+                                android:textAllCaps="false"
+                                android:textColor="@color/tertiary"
+                                app:backgroundTint="@color/button"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/ic_camera"
+                                app:iconTint="@color/primary"
+                                app:iconGravity="textStart" />
+                        </LinearLayout>
+
+                    </RelativeLayout>
+
+                    <!-- Overlay when image is selected -->
+                    <View
+                        android:id="@+id/view_photo_overlay"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="#AAFFFFFF"
+                        android:visibility="gone" />
+
+                    <!-- Re-upload prompt shown over whited out image -->
+                    <LinearLayout
+                        android:id="@+id/layout_reupload_prompt"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_add_photo"
+                            app:tint="@color/primary"
+                            android:layout_marginBottom="6dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Upload Incident Evidence"
+                            android:textColor="@color/tertiary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </FrameLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Category Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/cardBackground"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Category Label -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_category"
+                        app:tint="@color/primary"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Category"
+                        android:textColor="@color/tertiary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Dropdown -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    app:boxStrokeColor="@color/primary"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusBottomEnd="8dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/dropdown_category"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Select a category"
+                        android:textColor="@color/tertiary"
+                        android:textColorHint="@color/textSecondary"
+                        android:textSize="14sp"
+                        android:inputType="none"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Location Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/cardBackground"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Location Label -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_location"
+                        app:tint="@color/primary"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Incident Location"
+                        android:textColor="@color/tertiary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Location Text Field -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    app:boxStrokeColor="@color/primary"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusBottomEnd="8dp"
+                    android:layout_marginBottom="10dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_location"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Enter address "
+                        android:textColor="@color/tertiary"
+                        android:textColorHint="@color/textSecondary"
+                        android:textSize="14sp"
+                        android:inputType="text"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Use Current Location Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_use_location"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="Use Current Location"
+                    android:textAllCaps="false"
+                    android:textColor="@color/tertiary"
+                    android:textSize="14sp"
+                    app:backgroundTint="@color/button"
+                    app:cornerRadius="8dp"
+                    app:icon="@drawable/ic_my_location"
+                    app:iconTint="@color/primary"
+                    app:iconGravity="textStart" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Severity Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/cardBackground"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Severity Label Row -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_severity"
+                        app:tint="@color/primary"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Severity"
+                        android:textColor="@color/tertiary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Level label + value -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="LEVEL"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"
+                        android:textStyle="bold"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true" />
+
+                    <TextView
+                        android:id="@+id/tv_severity_value"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:text="5"
+                        android:textColor="@color/tertiary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true" />
+                </RelativeLayout>
+
+                <!-- Slider -->
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/slider_severity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:valueFrom="1"
+                    android:valueTo="10"
+                    android:stepSize="1"
+                    android:value="5"
+                    app:thumbColor="@color/primary"
+                    app:trackColorActive="@color/primary"
+                    app:trackColorInactive="@color/secondary"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- Low / Critical labels -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="LOW (1)"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp"
+                        android:layout_alignParentStart="true" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CRITICAL (10)"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp"
+                        android:layout_alignParentEnd="true" />
+                </RelativeLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Description Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/cardBackground"
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Description Label -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_description"
+                        app:tint="@color/primary"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Description"
+                        android:textColor="@color/tertiary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Description Text Area -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    app:boxStrokeColor="@color/primary"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusBottomEnd="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_description"
+                        android:layout_width="match_parent"
+                        android:layout_height="120dp"
+                        android:hint="Describe what happened, including any details..."
+                        android:textColor="@color/tertiary"
+                        android:textColorHint="@color/textSecondary"
+                        android:textSize="13sp"
+                        android:inputType="textMultiLine"
+                        android:gravity="top"
+                        android:padding="12dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Submit Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_submit"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Submit Report"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="#FF2D5A27"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_send"
+            app:iconTint="@android:color/white"
+            app:iconGravity="textEnd" />
+
+    </LinearLayout>
+</ScrollView>

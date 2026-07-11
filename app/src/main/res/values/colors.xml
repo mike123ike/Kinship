@@ -9,4 +9,5 @@
     <color name="cardBackground">#FFFFFF</color>
     <color name="alertText">#93000A</color>
     <color name="toolbar">#FFFFFF</color>
+    <color name="button">#FFE8F0E6</color>
 </resources>
