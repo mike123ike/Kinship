@@ -14,7 +14,7 @@ import com.google.android.material.slider.Slider;
 import com.pkg.civicfix.model.Issue;
 
 public class ReportFragment extends Fragment {
-    private static String[] categories;
+    private static final String[] categories;
 
     static {
         Issue.Category[] cats = Issue.Category.values();
