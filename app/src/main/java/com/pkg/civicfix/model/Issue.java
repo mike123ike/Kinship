@@ -11,7 +11,7 @@ public class Issue {
         REPORTED, IN_PROGRESS, RESOLVED;
     }
     public static enum Category {
-        ROAD, LIGHTING, HAZARDS, VANDALISM, SAFTEY, OTHER;
+        Road, Lighting, Hazard, Vandalism, Other;
     }
     @DocumentId
     private String id;

@@ -11,8 +11,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.slider.Slider;
+import com.pkg.civicfix.model.Issue;
 
 public class ReportFragment extends Fragment {
+    private static final String[] categories;
+
+    static {
+        Issue.Category[] cats = Issue.Category.values();
+        categories = new String[cats.length];
+        for (int i = 0; i < cats.length; i++) {
+            categories[i] = cats[i].name();
+        }
+    }
 
     @Nullable
     @Override
@@ -32,8 +42,6 @@ public class ReportFragment extends Fragment {
         slider.addOnChangeListener((s, value, fromUser) ->
                 tvSeverity.setText(String.valueOf((int) value))
         );
-
-        String[] categories = {"Road", "Lighting", "Hazards", "Vandalism", "Safety", "Other"};
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(),
