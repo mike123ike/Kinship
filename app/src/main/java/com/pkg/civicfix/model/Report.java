@@ -6,12 +6,12 @@ import com.google.firebase.firestore.Exclude;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Issue {
+public class Report {
     public static enum Status {
         REPORTED, IN_PROGRESS, RESOLVED;
     }
     public static enum Category {
-        Road, Lighting, Hazard, Vandalism, Other;
+        ROAD, LIGHTING, HAZARDS, VANDALISM, SAFETY, OTHER;
     }
     @DocumentId
     private String id;
@@ -27,11 +27,11 @@ public class Issue {
     private long resolvedCount;
     private Map<String, Boolean> votes;
 
-    public Issue() {
+    public Report() {
         votes = new HashMap<>();
     }
 
-    public Issue(String t, String d, String r, Status s, Category c, String p, double lat, double lon) {
+    public Report(String t, String d, String r, Status s, Category c, String p, double lat, double lon) {
         this();
         title = t;
         description = d;
