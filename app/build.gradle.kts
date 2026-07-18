@@ -32,6 +32,9 @@ android {
 
         val mapsKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsKey
+
+        buildConfigField("String", "CLOUD_NAME", "\"${localProperties.getProperty("CLOUD_NAME") ?: ""}\"")
+        buildConfigField("String", "UPLOAD_PRESET", "\"${localProperties.getProperty("UPLOAD_PRESET") ?: ""}\"")
     }
 
     buildTypes {
@@ -47,6 +50,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -85,4 +89,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("androidx.navigation:navigation-compose:2.7.6")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.cloudinary:cloudinary-android:3.0.2")
+    implementation("com.firebase:geofire-android-common:3.2.0")
 }
