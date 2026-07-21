@@ -28,6 +28,9 @@ import androidx.fragment.app.Fragment;
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
+import com.firebase.geofire.GeoFireUtils;
+import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -40,19 +43,25 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.Slider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.pkg.civicfix.model.Report;
 import com.pkg.civicfix.BuildConfig;
-import com.firebase.geofire.GeoFireUtils;
-import com.firebase.geofire.GeoLocation;
+import com.pkg.civicfix.model.Event;
+import com.pkg.civicfix.model.Report;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReportFragment extends Fragment implements OnMapReadyCallback {
 
@@ -155,86 +164,242 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         if (selectedImageUri != null) {
             uploadImageThenSubmit();
         } else {
-            writeReportToFirestore("");
+            runClusteringLogic("");
         }
     }
 
-    // uploads image to cloudinary
+    // uploads the image to cloudinary and runs the cluster logic
     private void uploadImageThenSubmit() {
         MediaManager.get()
                 .upload(selectedImageUri)
                 .unsigned(BuildConfig.UPLOAD_PRESET)
                 .callback(new UploadCallback() {
-                    @Override
-                    public void onStart(String requestId) {}
-
-                    @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {}
+                    @Override public void onStart(String requestId) {}
+                    @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
 
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
                         String imageUrl = (String) resultData.get("secure_url");
-                        writeReportToFirestore(imageUrl);
+                        runClusteringLogic(imageUrl);
                     }
 
                     @Override
                     public void onError(String requestId, ErrorInfo error) {
                         if (getContext() == null) return;
-                        btnSubmit.setEnabled(true);
-                        btnSubmit.setText("Submit Report");
+                        resetSubmitButton();
                         Toast.makeText(requireContext(),
                                 "Image upload failed: " + error.getDescription(),
                                 Toast.LENGTH_SHORT).show();
                     }
 
-                    @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {}
+                    @Override public void onReschedule(String requestId, ErrorInfo error) {}
                 })
                 .dispatch();
     }
 
-    // writes to report document
-    private void writeReportToFirestore(String imageUrl) {
+    private void runClusteringLogic(String imageUrl) {
+        if (getContext() == null) return;
+
         String uid = auth.getCurrentUser().getUid();
         String categoryStr = dropdown.getText().toString().toUpperCase();
-        Report.Category category = Report.Category.valueOf(categoryStr);
         int severity = (int) slider.getValue();
         String description = tvDescription.getText().toString().trim();
         String geohash = GeoFireUtils.getGeoHashForLocation(
-                new GeoLocation(selectedLat, selectedLng)
-        );
+                new GeoLocation(selectedLat, selectedLng));
 
-        Report report = new Report(
-                uid,
-                false,
-                category,
-                severity,
-                description,
-                imageUrl,
-                selectedLat,
-                selectedLng,
-                geohash
-        );
+        // generates geohash bounds for 0.2 miles, we could change this for more accuracy
+        List<com.firebase.geofire.GeoQueryBounds> bounds =
+                GeoFireUtils.getGeoHashQueryBounds(
+                        new GeoLocation(selectedLat, selectedLng), 322);
 
-        db.collection("reports")
-                .add(report)
-                .addOnSuccessListener(docRef -> {
+        // queries firebase for each geohash bound
+        List<com.google.android.gms.tasks.Task<QuerySnapshot>> tasks = new ArrayList<>();
+        for (com.firebase.geofire.GeoQueryBounds bound : bounds) {
+            Query q = db.collection("events")
+                    .whereEqualTo("category", categoryStr)
+                    .orderBy("geohash")
+                    .startAt(bound.startHash)
+                    .endAt(bound.endHash);
+            tasks.add(q.get());
+        }
+
+        com.google.android.gms.tasks.Tasks.whenAllComplete(tasks)
+                .addOnCompleteListener(t -> {
                     if (getContext() == null) return;
-                    Toast.makeText(requireContext(),
-                            "Report submitted!", Toast.LENGTH_SHORT).show();
-                    resetForm();
-                })
+
+                    DocumentSnapshot matchedEvent = null;
+
+                    // go through all bounds and finds match within 0.2 miles
+                    for (com.google.android.gms.tasks.Task<QuerySnapshot> task : tasks) {
+                        if (!task.isSuccessful()) continue;
+                        for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                            double eventLat = doc.getDouble("latitude");
+                            double eventLng = doc.getDouble("longitude");
+                            double distanceM = GeoFireUtils.getDistanceBetween(
+                                    new GeoLocation(selectedLat, selectedLng),
+                                    new GeoLocation(eventLat, eventLng));
+                            if (distanceM <= 322) {
+                                matchedEvent = doc;
+                                break;
+                            }
+                        }
+                        if (matchedEvent != null) break;
+                    }
+
+                    if (matchedEvent != null) {
+                        // checks whether the event is reported already by the user
+                        List<String> reporterIds = (List<String>) matchedEvent.get("reporterIds");
+                        if (reporterIds != null && reporterIds.contains(uid)) {
+                            resetSubmitButton();
+                            Toast.makeText(requireContext(),
+                                    "You have already reported this issue",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        //update the event
+                        updateExistingEvent(matchedEvent, uid, severity, imageUrl,
+                                categoryStr, description, geohash, imageUrl);
+                    } else {
+                        //if there isnt a map it makes a new event
+                        createNewEvent(uid, categoryStr, severity, imageUrl,
+                                geohash, description, imageUrl);
+                    }
+                });
+    }
+
+    private void updateExistingEvent(DocumentSnapshot eventDoc, String uid,
+                                     int severity, String imageUrl,
+                                     String category, String description,
+                                     String geohash, String imgUrl) {
+        String eventId = eventDoc.getId();
+        long currentCount = eventDoc.getLong("uniqueUserCount");
+        double currentSeveritySum = eventDoc.getDouble("totalSeveritySum");
+
+        long newCount = currentCount + 1;
+        double newSeveritySum = currentSeveritySum + severity;
+        double newAvgSeverity = newSeveritySum / newCount;
+
+        Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("reporterIds", FieldValue.arrayUnion(uid));
+        updates.put("uniqueUserCount", FieldValue.increment(1));
+        updates.put("reportCount", FieldValue.increment(1));
+        updates.put("totalSeveritySum", FieldValue.increment(severity));
+        updates.put("averageSeverity", newAvgSeverity);
+        updates.put("updatedAt", com.google.firebase.Timestamp.now());
+
+        // adds image url to gallery
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            updates.put("photoGallery", FieldValue.arrayUnion(imageUrl));
+        }
+
+        // threshold for visiblility
+        if (newCount >= 2) {
+            updates.put("status", "ACTIVE");
+        }
+
+        db.collection("events").document(eventId)
+                .update(updates)
+                .addOnSuccessListener(aVoid ->
+                        writeReportDocument(uid, category, severity, description,
+                                imgUrl, geohash, eventId)
+                )
                 .addOnFailureListener(e -> {
                     if (getContext() == null) return;
-                    btnSubmit.setEnabled(true);
-                    btnSubmit.setText("Submit Report");
+                    resetSubmitButton();
                     Toast.makeText(requireContext(),
-                            "Failed to submit: " + e.getMessage(),
+                            "Failed to update event: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
 
-    // resets the form after sumbission
+    private void createNewEvent(String uid, String category, int severity,
+                                String imageUrl, String geohash,
+                                String description, String imgUrl) {
+        Event event = new Event(category, severity, uid, imageUrl,
+                selectedLat, selectedLng, geohash);
+
+        db.collection("events")
+                .add(event)
+                .addOnSuccessListener(docRef -> {
+                    String eventId = docRef.getId();
+                    writeReportDocument(uid, category, severity, description,
+                            imgUrl, geohash, eventId);
+                })
+                .addOnFailureListener(e -> {
+                    if (getContext() == null) return;
+                    resetSubmitButton();
+                    Toast.makeText(requireContext(),
+                            "Failed to create event: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void writeReportDocument(String uid, String category, int severity,
+                                     String description, String imageUrl,
+                                     String geohash, String eventId) {
+        if (getContext() == null) return;
+
+        Report.Category cat = Report.Category.valueOf(category);
+
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (getContext() == null) return;
+
+                    boolean isAnonymous = false;
+                    if (documentSnapshot.exists()) {
+                        com.pkg.civicfix.model.User user =
+                                documentSnapshot.toObject(com.pkg.civicfix.model.User.class);
+                        if (user != null) {
+                            isAnonymous = user.isAnonymousReporting();
+                        }
+                    }
+
+                    Report report = new Report(
+                            uid,
+                            isAnonymous,
+                            cat,
+                            severity,
+                            description,
+                            imageUrl,
+                            selectedLat,
+                            selectedLng,
+                            geohash
+                    );
+                    report.setEventId(eventId);
+
+                    db.collection("reports")
+                            .add(report)
+                            .addOnSuccessListener(docRef -> {
+                                if (getContext() == null) return;
+                                Toast.makeText(requireContext(),
+                                        "Report submitted!", Toast.LENGTH_SHORT).show();
+                                resetForm();
+                            })
+                            .addOnFailureListener(e -> {
+                                if (getContext() == null) return;
+                                resetSubmitButton();
+                                Toast.makeText(requireContext(),
+                                        "Failed to submit report: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            });
+
+                })
+                .addOnFailureListener(e -> {
+                    if (getContext() == null) return;
+                    resetSubmitButton();
+                    Toast.makeText(requireContext(),
+                            "Failed to fetch user settings: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void resetSubmitButton() {
+        if (btnSubmit == null) return;
+        btnSubmit.setEnabled(true);
+        btnSubmit.setText("Submit Report");
+    }
+
+    // ── Reset full form after success ──
     private void resetForm() {
         selectedImageUri = null;
         selectedLat = 0;
@@ -250,10 +415,10 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             getView().findViewById(R.id.layout_upload_prompt)
                     .setBackgroundResource(R.drawable.bg_dashed_border);
         }
-        btnSubmit.setEnabled(true);
-        btnSubmit.setText("Submit Report");
+        resetSubmitButton();
     }
 
+    // ── Map ready ──
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         previewMap = googleMap;
@@ -263,7 +428,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         applyMapStyle(previewMap);
     }
 
-    // stores image directory, and alters ui accordingly
+    // ── Library picker ──
     private final ActivityResultLauncher<String> launchLibrary = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -277,7 +442,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             }
     );
 
-    // stores image directory from camera, and alters ui accordingly
+    // ── Camera ──
     private final ActivityResultLauncher<Uri> launchCamera = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
             success -> {
@@ -318,7 +483,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    // location picker
+    // ── Location picker ──
     private final ActivityResultLauncher<Intent> locationPicker = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -331,7 +496,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             }
     );
 
-    // current location
+    // ── GPS ──
     private void useCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -382,6 +547,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    // ── MapView lifecycle ──
     @Override public void onResume() { super.onResume(); if (mapPreview != null) mapPreview.onResume(); }
     @Override public void onPause() { super.onPause(); if (mapPreview != null) mapPreview.onPause(); }
     @Override public void onDestroy() { super.onDestroy(); if (mapPreview != null) mapPreview.onDestroy(); }

@@ -31,12 +31,18 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 selected = new ProfileFragment();
             }
+
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, selected)
                     .commitAllowingStateLoss();
             return true;
+
+
         });
 
+        bottomNav.setSelectedItemId(R.id.nav_map);
     }
+
+
 }
