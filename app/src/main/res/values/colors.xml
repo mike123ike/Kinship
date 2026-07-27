@@ -7,6 +7,7 @@
     <color name="background">#F5F5F5</color>
     <color name="textSecondary">#9CA3AF</color>
     <color name="cardBackground">#FFFFFF</color>
+    <color name="popupCardBackground">#F1F3F4</color>
     <color name="alertText">#93000A</color>
     <color name="toolbar">#FFFFFF</color>
     <color name="button">#FFE8F0E6</color>

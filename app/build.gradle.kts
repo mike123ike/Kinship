@@ -71,6 +71,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 
     // Firebase & Maps Dependencies
     implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
