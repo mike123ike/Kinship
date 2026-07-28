@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,11 +17,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -46,6 +45,7 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
     private TextView tvSeverityBadge;
     private TextView tvAddress;
     private TextView tvTimeAgo;
+    private TextView tvUniqueReports;
     private TextView tvVoteScore;
     private TextView tvCommentCount;
     private TextView tvCommentAvatar;
@@ -60,13 +60,16 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
     private View btnClose;
 
     private int currentVoteScore = 0;
-    private int userVote = 0; // 0 = no vote, 1 = upvote, -1 = downvote
+    private int userVote = 0;
 
     public static EventPopupFragment newInstance(String eventId) {
         EventPopupFragment fragment = new EventPopupFragment();
+
         Bundle args = new Bundle();
         args.putString(ARG_EVENT_ID, eventId);
+
         fragment.setArguments(args);
+
         return fragment;
     }
 
@@ -105,6 +108,7 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
         tvSeverityBadge = view.findViewById(R.id.tv_severity_badge);
         tvAddress = view.findViewById(R.id.tv_popup_address);
         tvTimeAgo = view.findViewById(R.id.tv_popup_time);
+        tvUniqueReports = view.findViewById(R.id.tv_unique_reports);
         tvVoteScore = view.findViewById(R.id.tv_vote_score);
         tvCommentCount = view.findViewById(R.id.tv_comment_count);
         tvCommentAvatar = view.findViewById(R.id.tv_comment_avatar);
@@ -113,15 +117,16 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
         tvCommentText = view.findViewById(R.id.tv_comment_text);
         tvCommentHearts = view.findViewById(R.id.tv_comment_hearts);
         layoutTopComment = view.findViewById(R.id.layout_top_comment);
+
         layoutCommentAuthor = view.findViewById(
                 R.id.layout_comment_author
         );
+
         btnUpvote = view.findViewById(R.id.btn_upvote);
         btnDownvote = view.findViewById(R.id.btn_downvote);
         btnClose = view.findViewById(R.id.btn_close);
 
         btnClose.setOnClickListener(v -> dismiss());
-
         btnUpvote.setOnClickListener(v -> castVote(1));
         btnDownvote.setOnClickListener(v -> castVote(-1));
 
@@ -147,9 +152,11 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
 
         if (getDialog() instanceof BottomSheetDialog) {
             BottomSheetBehavior<?> behavior =
-                    ((BottomSheetDialog) getDialog()).getBehavior();
+                    ((BottomSheetDialog) getDialog())
+                            .getBehavior();
 
             behavior.setSkipCollapsed(true);
+
             behavior.setState(
                     BottomSheetBehavior.STATE_EXPANDED
             );
@@ -191,6 +198,7 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                     );
 
             tvSeverityBadge.setText(severityText);
+
             setSeverityBadgeColor(
                     getSeverityColor(severity)
             );
@@ -224,6 +232,10 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
             );
         }
 
+        showUniqueReportCount(
+                doc.getLong("uniqueUserCount")
+        );
+
         Long voteScore = doc.getLong("voteScore");
 
         currentVoteScore = voteScore != null
@@ -233,6 +245,34 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
         tvVoteScore.setText(
                 String.valueOf(currentVoteScore)
         );
+
+        Long commentCount =
+                doc.getLong("commentCount");
+
+        if (commentCount != null) {
+            showCommentCount(commentCount);
+        } else {
+            loadCommentCountFallback();
+        }
+    }
+
+    private void showUniqueReportCount(
+            Long uniqueUserCount
+    ) {
+        if (uniqueUserCount == null
+                || uniqueUserCount <= 0) {
+            tvUniqueReports.setVisibility(View.GONE);
+            return;
+        }
+
+        String label = uniqueUserCount == 1
+                ? "• 1 unique report"
+                : "• "
+                  + uniqueUserCount
+                  + " unique reports";
+
+        tvUniqueReports.setText(label);
+        tvUniqueReports.setVisibility(View.VISIBLE);
     }
 
     @SuppressWarnings("unchecked")
@@ -246,10 +286,6 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
             ivPhoto.setVisibility(View.VISIBLE);
             layoutNoImage.setVisibility(View.GONE);
 
-            /*
-             * New photo URLs are appended to photoGallery,
-             * so the last URL is the most recently uploaded.
-             */
             String newestPhotoUrl =
                     photos.get(photos.size() - 1);
 
@@ -292,94 +328,116 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                 .document(eventId)
                 .collection("comments")
                 .orderBy(
+                        "heartCount",
+                        Query.Direction.DESCENDING
+                )
+                .orderBy(
                         "createdAt",
                         Query.Direction.DESCENDING
                 )
+                .limit(1)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) {
                         return;
                     }
 
-                    showCommentCount(snapshot.size());
-                    showLatestComment(snapshot);
+                    if (snapshot.isEmpty()) {
+                        loadNewestCommentPreview();
+                    } else {
+                        showPreviewComment(
+                                snapshot
+                                        .getDocuments()
+                                        .get(0)
+                        );
+                    }
                 })
                 .addOnFailureListener(error -> {
+                    if (isAdded()) {
+                        loadNewestCommentPreview();
+                    }
+                });
+    }
+
+    private void loadNewestCommentPreview() {
+        db.collection("events")
+                .document(eventId)
+                .collection("comments")
+                .orderBy(
+                        "createdAt",
+                        Query.Direction.DESCENDING
+                )
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) {
                         return;
                     }
 
-                    tvCommentCount.setText(
-                            "Comments unavailable"
-                    );
-
-                    showNoCommentsState(
-                            "Could not load community comments"
-                    );
+                    if (snapshot.isEmpty()) {
+                        showNoCommentsState(
+                                "No comments yet — start the conversation"
+                        );
+                    } else {
+                        showPreviewComment(
+                                snapshot
+                                        .getDocuments()
+                                        .get(0)
+                        );
+                    }
+                })
+                .addOnFailureListener(error -> {
+                    if (isAdded()) {
+                        showNoCommentsState(
+                                "Could not load community comments"
+                        );
+                    }
                 });
     }
 
-    private void showCommentCount(int count) {
-        String text = count == 1
-                ? "1 comment"
-                : count + " comments";
-
-        tvCommentCount.setText(text + "  ›");
-    }
-
-    private void showLatestComment(
-            QuerySnapshot snapshot
+    private void showPreviewComment(
+            DocumentSnapshot comment
     ) {
-        if (snapshot.isEmpty()) {
+        String status = comment.getString("status");
+
+        if ("deleted".equalsIgnoreCase(status)
+                || "hidden".equalsIgnoreCase(status)) {
+
             showNoCommentsState(
                     "No comments yet — start the conversation"
             );
+
             return;
         }
 
-        // results are newest-first.
-        // prefer the comment with the highest heartCount.
-        // if every comment has zero hearts, the initially selected document will be the newest comment.
-        DocumentSnapshot selected =
-                snapshot.getDocuments().get(0);
-
-        long highestHeartCount = 0;
-
-        for (DocumentSnapshot candidate
-                : snapshot.getDocuments()) {
-
-            Long storedHeartCount =
-                    candidate.getLong("heartCount");
-
-            long candidateHeartCount =
-                    storedHeartCount == null
-                            ? 0
-                            : storedHeartCount;
-
-            if (candidateHeartCount
-                    > highestHeartCount) {
-
-                highestHeartCount =
-                        candidateHeartCount;
-
-                selected = candidate;
-            }
-        }
-
-        String text = selected.getString("text");
-        String userId =
-                selected.getString("userId");
+        String text = comment.getString("text");
 
         Boolean isAnonymous =
-                selected.getBoolean("isAnonymous");
+                comment.getBoolean("isAnonymous");
+
+        String displayName =
+                comment.getString("displayName");
+
+        String userId =
+                comment.getString("userId");
 
         com.google.firebase.Timestamp commentTime =
-                selected.getTimestamp("createdAt");
+                comment.getTimestamp("createdAt");
 
-        layoutCommentAuthor.setVisibility(View.VISIBLE);
+        Long storedHeartCount =
+                comment.getLong("heartCount");
+
+        long heartCount = storedHeartCount == null
+                ? 0
+                : storedHeartCount;
+
+        layoutCommentAuthor.setVisibility(
+                View.VISIBLE
+        );
 
         tvCommentText.setText(
-                text == null || text.trim().isEmpty()
+                text == null
+                        || text.trim().isEmpty()
                         ? "Comment has no text"
                         : text
         );
@@ -392,9 +450,9 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                 )
         );
 
-        if (highestHeartCount > 0) {
+        if (heartCount > 0) {
             tvCommentHearts.setText(
-                    "♥ " + highestHeartCount
+                    "♥ " + heartCount
             );
 
             tvCommentHearts.setVisibility(
@@ -406,20 +464,69 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
             );
         }
 
-        if (Boolean.TRUE.equals(isAnonymous)
-                || userId == null) {
-
+        if (Boolean.TRUE.equals(isAnonymous)) {
             showAnonymousCommentAuthor();
-        } else {
+        } else if (displayName != null
+                && !displayName.trim().isEmpty()) {
+
+            showCommentAuthor(
+                    displayName.trim()
+            );
+        } else if (userId != null
+                && !userId.trim().isEmpty()) {
+
             loadCommentUser(userId);
+        } else {
+            showCommentAuthor(
+                    "Community member"
+            );
         }
+    }
+
+    private void loadCommentCountFallback() {
+        db.collection("events")
+                .document(eventId)
+                .collection("comments")
+                .count()
+                .get(AggregateSource.SERVER)
+                .addOnSuccessListener(result -> {
+                    if (isAdded()) {
+                        showCommentCount(
+                                result.getCount()
+                        );
+                    }
+                })
+                .addOnFailureListener(error -> {
+                    if (isAdded()) {
+                        tvCommentCount.setText(
+                                "Comments  ›"
+                        );
+                    }
+                });
+    }
+
+    private void showCommentCount(long count) {
+        tvCommentCount.setText(
+                (
+                        count == 1
+                                ? "1 comment"
+                                : count + " comments"
+                )
+                        + "  ›"
+        );
     }
 
     private void showNoCommentsState(
             String message
     ) {
-        layoutCommentAuthor.setVisibility(View.GONE);
-        tvCommentHearts.setVisibility(View.GONE);
+        layoutCommentAuthor.setVisibility(
+                View.GONE
+        );
+
+        tvCommentHearts.setVisibility(
+                View.GONE
+        );
+
         tvCommentText.setText(message);
     }
 
@@ -450,8 +557,26 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
     }
 
     private void showAnonymousCommentAuthor() {
-        tvCommentUser.setText("Anonymous");
-        tvCommentAvatar.setText("A");
+        showCommentAuthor("Anonymous");
+    }
+
+    private void showCommentAuthor(String name) {
+        String safeName =
+                name == null
+                        || name.trim().isEmpty()
+                        ? "Community member"
+                        : name.trim();
+
+        tvCommentUser.setText(safeName);
+
+        tvCommentAvatar.setText(
+                String.valueOf(
+                                safeName.charAt(0)
+                        )
+                        .toUpperCase(
+                                Locale.getDefault()
+                        )
+        );
     }
 
     private void loadCommentUser(String uid) {
@@ -466,40 +591,19 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                     String name =
                             doc.getString("displayName");
 
-                    if (name != null
-                            && !name.trim().isEmpty()) {
-
-                        String trimmedName =
-                                name.trim();
-
-                        tvCommentUser.setText(
-                                trimmedName
-                        );
-
-                        tvCommentAvatar.setText(
-                                String.valueOf(
-                                                trimmedName
-                                                        .charAt(0)
-                                        )
-                                        .toUpperCase(
-                                                Locale.getDefault()
-                                        )
-                        );
-                    } else {
-                        showAnonymousCommentAuthor();
-                    }
+                    showCommentAuthor(name);
                 })
                 .addOnFailureListener(error -> {
                     if (isAdded()) {
-                        showAnonymousCommentAuthor();
+                        showCommentAuthor(
+                                "Community member"
+                        );
                     }
                 });
     }
 
     private void loadUserVote() {
-        String uid = auth.getCurrentUser() != null
-                ? auth.getCurrentUser().getUid()
-                : null;
+        String uid = auth.getUid();
 
         if (uid == null) {
             return;
@@ -511,11 +615,13 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                 .document(uid)
                 .get()
                 .addOnSuccessListener(doc -> {
-                    if (!isAdded() || !doc.exists()) {
+                    if (!isAdded()
+                            || !doc.exists()) {
                         return;
                     }
 
-                    Long vote = doc.getLong("vote");
+                    Long vote =
+                            doc.getLong("vote");
 
                     if (vote != null) {
                         userVote = vote.intValue();
@@ -525,17 +631,9 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
     }
 
     private void castVote(int vote) {
-        String uid = auth.getCurrentUser() != null
-                ? auth.getCurrentUser().getUid()
-                : null;
+        String uid = auth.getUid();
 
         if (uid == null) {
-            Toast.makeText(
-                    requireContext(),
-                    "Sign in to vote",
-                    Toast.LENGTH_SHORT
-            ).show();
-
             return;
         }
 
@@ -546,7 +644,9 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
             userVote = 0;
             scoreDelta = -vote;
         } else {
-            scoreDelta = vote - previousVote;
+            scoreDelta =
+                    vote - previousVote;
+
             userVote = vote;
         }
 
@@ -568,7 +668,11 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
             Map<String, Object> voteData =
                     new HashMap<>();
 
-            voteData.put("vote", userVote);
+            voteData.put(
+                    "vote",
+                    userVote
+            );
+
             voteData.put(
                     "createdAt",
                     com.google.firebase.Timestamp.now()
@@ -585,14 +689,18 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                 .document(eventId)
                 .update(
                         "voteScore",
-                        FieldValue.increment(scoreDelta)
+                        FieldValue.increment(
+                                scoreDelta
+                        )
                 );
     }
 
     private void updateVoteButtonStyles() {
         int activeColor =
                 requireContext()
-                        .getColor(R.color.primary);
+                        .getColor(
+                                R.color.primary
+                        );
 
         int inactiveColor =
                 requireContext()
@@ -659,13 +767,15 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                         )
                                 : address;
 
-                requireActivity().runOnUiThread(() -> {
-                    if (isAdded()) {
-                        tvAddress.setText(
-                                resolvedAddress
-                        );
-                    }
-                });
+                requireActivity()
+                        .runOnUiThread(() -> {
+                            if (isAdded()) {
+                                tvAddress.setText(
+                                        resolvedAddress
+                                );
+                            }
+                        });
+
             } catch (Exception error) {
                 final String coordinates =
                         String.format(
@@ -689,7 +799,9 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
         }).start();
     }
 
-    private String formatCategory(String category) {
+    private String formatCategory(
+            String category
+    ) {
         if (category == null) {
             return "Community Report";
         }
