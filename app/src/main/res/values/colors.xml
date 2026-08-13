@@ -16,4 +16,13 @@
     <color name="alertText">#93000A</color>
     <color name="toolbar">#FFFFFF</color>
     <color name="button">#FFE8F0E6</color>
+
+    <color name="profileAvatarStroke">#D8E0D5</color>
+
+    <color name="profileLocationHomeIcon">#2D5A27</color>
+    <color name="profileLocationNeutralIcon">#1F2937</color>
+
+    <color name="fixedStatusBg">#E8F2E4</color>
+    <color name="fixedStatusText">#2D5A27</color>
+    <color name="fixedStatusStroke">#D7E6D2</color>
 </resources>
