@@ -16,7 +16,7 @@
         android:paddingEnd="20dp"
         android:paddingBottom="24dp">
 
-        <!-- Drag handle -->
+        <!-- drag handle -->
         <View
             android:layout_width="40dp"
             android:layout_height="4dp"
@@ -24,7 +24,7 @@
             android:background="@drawable/bg_bottom_sheet_handle" />
 
 
-        <!-- Title -->
+        <!-- title -->
         <TextView
             android:id="@+id/tv_location_editor_title"
             android:layout_width="wrap_content"
@@ -36,10 +36,7 @@
             android:textStyle="bold" />
 
 
-        <!-- ================================================= -->
-        <!-- CUSTOM NAME                                       -->
-        <!-- ================================================= -->
-
+        <!-- custom name -->
         <LinearLayout
             android:id="@+id/layout_location_name"
             android:layout_width="match_parent"
@@ -75,10 +72,7 @@
         </LinearLayout>
 
 
-        <!-- ================================================= -->
-        <!-- LOCATION                                          -->
-        <!-- ================================================= -->
-
+        <!-- location -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -90,7 +84,7 @@
             android:textStyle="bold" />
 
 
-        <!-- Map preview -->
+        <!-- map preview -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="180dp"
@@ -108,7 +102,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
 
-                <!-- Tapping the map opens LocationPickerActivity -->
+                <!-- tapping the map opens locationpickeractivity -->
                 <View
                     android:id="@+id/map_click_overlay"
                     android:layout_width="match_parent"
@@ -136,7 +130,7 @@
         </com.google.android.material.card.MaterialCardView>
 
 
-        <!-- Address -->
+        <!-- address -->
         <TextView
             android:id="@+id/tv_location_address"
             android:layout_width="match_parent"
@@ -147,11 +141,7 @@
             android:textSize="13sp" />
 
 
-        <!-- ================================================= -->
-        <!-- CURRENT LOCATION                                  -->
-        <!-- SAME STYLE AS REPORT                              -->
-        <!-- ================================================= -->
-
+        <!-- current location -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_use_current_location"
             android:layout_width="match_parent"
@@ -168,10 +158,7 @@
             app:iconTint="@color/primary" />
 
 
-        <!-- ================================================= -->
-        <!-- ACTIONS                                           -->
-        <!-- ================================================= -->
-
+        <!-- actions -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -180,7 +167,7 @@
             android:orientation="horizontal">
 
 
-            <!-- REMOVE -->
+            <!-- remove -->
             <TextView
                 android:id="@+id/btn_remove_location"
                 android:layout_width="wrap_content"
@@ -205,7 +192,7 @@
                 android:layout_weight="1" />
 
 
-            <!-- CANCEL -->
+            <!-- cancel -->
             <TextView
                 android:id="@+id/btn_cancel_location"
                 android:layout_width="wrap_content"
@@ -222,7 +209,7 @@
                 android:textStyle="bold" />
 
 
-            <!-- SAVE -->
+            <!-- save -->
             <TextView
                 android:id="@+id/btn_save_location"
                 android:layout_width="wrap_content"

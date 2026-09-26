@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Full screen map -->
+    <!-- full screen map -->
     <fragment
         android:id="@+id/map_picker"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Fixed pin in the centre of the screen -->
+    <!-- fixed pin in the center of the screen -->
     <ImageView
         android:layout_width="36dp"
         android:layout_height="36dp"
@@ -28,7 +28,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Top bar -->
+    <!-- top bar -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="56dp"
@@ -63,7 +63,7 @@
             android:layout_marginStart="8dp" />
     </LinearLayout>
 
-    <!-- Bottom card — address + confirm button -->
+    <!-- bottom card , address + confirm button -->
     <androidx.cardview.widget.CardView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
