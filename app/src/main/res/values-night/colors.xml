@@ -25,4 +25,5 @@
     <color name="fixedStatusBg">#2F4032</color>
     <color name="fixedStatusText">#B9E4AE</color>
     <color name="fixedStatusStroke">#49614D</color>
+    <color name="buttonTextOnPrimary">#121C2A</color>
 </resources>

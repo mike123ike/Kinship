@@ -1,5 +1,6 @@
 package com.pkg.civicfix;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,6 +22,8 @@ import com.pkg.civicfix.model.User;
 
 public class ProfileFragment extends Fragment {
 
+    private static final boolean DUMMY_HAS_SAVED_LOCATION = false;
+
     private FirebaseAuth auth;
     private FirebaseFirestore db;
 
@@ -30,6 +33,11 @@ public class ProfileFragment extends Fragment {
     private TextView tvReportCount;
     private TextView tvFixedCount;
 
+    private TextView tvImportantLocationsEdit;
+
+    private View layoutDummyHomeLocation;
+    private View layoutAddImportantLocationEmpty;
+
     @Nullable
     @Override
     public View onCreateView(
@@ -37,6 +45,7 @@ public class ProfileFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
+
         return inflater.inflate(
                 R.layout.fragment_profile,
                 container,
@@ -49,27 +58,138 @@ public class ProfileFragment extends Fragment {
             @NonNull View view,
             @Nullable Bundle savedInstanceState
     ) {
-        super.onViewCreated(view, savedInstanceState);
+        super.onViewCreated(
+                view,
+                savedInstanceState
+        );
 
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        auth =
+                FirebaseAuth.getInstance();
+
+        db =
+                FirebaseFirestore.getInstance();
+
+
 
         ivProfilePicture =
-                view.findViewById(R.id.iv_profile_picture);
+                view.findViewById(
+                        R.id.iv_profile_picture
+                );
 
         tvProfileName =
-                view.findViewById(R.id.tv_profile_name);
+                view.findViewById(
+                        R.id.tv_profile_name
+                );
 
         tvReportCount =
-                view.findViewById(R.id.tv_profile_report_count);
+                view.findViewById(
+                        R.id.tv_profile_report_count
+                );
 
         tvFixedCount =
-                view.findViewById(R.id.tv_profile_fixed_count);
+                view.findViewById(
+                        R.id.tv_profile_fixed_count
+                );
+
+
+
+        tvImportantLocationsEdit =
+                view.findViewById(
+                        R.id.tv_important_locations_edit
+                );
+
+        layoutDummyHomeLocation =
+                view.findViewById(
+                        R.id.layout_dummy_home_location
+                );
+
+        layoutAddImportantLocationEmpty =
+                view.findViewById(
+                        R.id.layout_add_important_location_empty
+                );
+
 
         tvProfileName.setText("...");
         tvReportCount.setText("—");
         tvFixedCount.setText("—");
+
+
+        setupImportantLocationsUi();
     }
+
+    private void setupImportantLocationsUi() {
+
+        if (!DUMMY_HAS_SAVED_LOCATION) {
+
+            tvImportantLocationsEdit.setVisibility(
+                    View.GONE
+            );
+
+            layoutDummyHomeLocation.setVisibility(
+                    View.GONE
+            );
+
+            layoutAddImportantLocationEmpty.setVisibility(
+                    View.VISIBLE
+            );
+
+        }
+
+        else {
+
+            tvImportantLocationsEdit.setVisibility(
+                    View.VISIBLE
+            );
+
+            layoutDummyHomeLocation.setVisibility(
+                    View.VISIBLE
+            );
+
+            layoutAddImportantLocationEmpty.setVisibility(
+                    View.GONE
+            );
+        }
+
+
+        tvImportantLocationsEdit.setOnClickListener(v ->
+                openImportantLocationsActivity()
+        );
+
+
+        layoutAddImportantLocationEmpty.setOnClickListener(v ->
+                openImportantLocationsActivity()
+        );
+
+
+        layoutDummyHomeLocation.setOnClickListener(v -> {
+
+            ImportantLocationBottomSheet
+                    .newPreset(
+                            "Home",
+                            true,
+                            "123 Main Street, Round Rock, TX",
+                            30.5083,
+                            -97.6789
+                    )
+                    .show(
+                            getParentFragmentManager(),
+                            "edit_home"
+                    );
+        });
+    }
+
+    private void openImportantLocationsActivity() {
+
+        Intent intent =
+                new Intent(
+                        requireContext(),
+                        ImportantLocationsActivity.class
+                );
+
+        startActivity(intent);
+    }
+
+
 
     @Override
     public void onResume() {
@@ -84,18 +204,33 @@ public class ProfileFragment extends Fragment {
                 auth.getCurrentUser();
 
         if (firebaseUser == null) {
+
             showSignedOutState();
+
             return;
         }
 
         String uid =
                 firebaseUser.getUid();
 
-        loadGoogleProfilePicture(firebaseUser);
-        loadUsername(uid, firebaseUser);
-        loadReportCount(uid);
-        loadFixedReportCount(uid);
+        loadGoogleProfilePicture(
+                firebaseUser
+        );
+
+        loadUsername(
+                uid,
+                firebaseUser
+        );
+
+        loadReportCount(
+                uid
+        );
+
+        loadFixedReportCount(
+                uid
+        );
     }
+
 
 
     private void loadGoogleProfilePicture(
@@ -110,16 +245,24 @@ public class ProfileFragment extends Fragment {
                 firebaseUser.getPhotoUrl();
 
         if (photoUrl == null) {
+
             showDefaultProfilePicture();
+
             return;
         }
 
         Glide.with(this)
                 .load(photoUrl)
                 .centerCrop()
-                .placeholder(R.drawable.ic_profile_placeholder)
-                .error(R.drawable.ic_profile_placeholder)
-                .into(ivProfilePicture);
+                .placeholder(
+                        R.drawable.ic_profile_placeholder
+                )
+                .error(
+                        R.drawable.ic_profile_placeholder
+                )
+                .into(
+                        ivProfilePicture
+                );
     }
 
     private void showDefaultProfilePicture() {
@@ -129,9 +272,15 @@ public class ProfileFragment extends Fragment {
         }
 
         Glide.with(this)
-                .load(R.drawable.ic_profile_placeholder)
-                .into(ivProfilePicture);
+                .load(
+                        R.drawable.ic_profile_placeholder
+                )
+                .into(
+                        ivProfilePicture
+                );
     }
+
+
 
     private void loadUsername(
             String uid,
@@ -141,48 +290,62 @@ public class ProfileFragment extends Fragment {
         db.collection("users")
                 .document(uid)
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
+                .addOnSuccessListener(
+                        documentSnapshot -> {
 
-                    if (!isViewAlive()) {
-                        return;
-                    }
+                            if (!isViewAlive()) {
+                                return;
+                            }
 
-                    String name = null;
+                            String name = null;
 
-                    if (documentSnapshot.exists()) {
+                            if (documentSnapshot.exists()) {
 
-                        User user =
-                                documentSnapshot.toObject(User.class);
+                                User user =
+                                        documentSnapshot
+                                                .toObject(
+                                                        User.class
+                                                );
 
-                        if (user != null) {
+                                if (user != null) {
 
-                            if (user.isDeleted()) {
+                                    if (user.isDeleted()) {
 
-                                name = "Deleted User";
+                                        name =
+                                                "Deleted User";
 
-                            } else if (
-                                    user.getDisplayName() != null
-                                            && !user.getDisplayName()
-                                            .trim()
-                                            .isEmpty()
+                                    } else if (
+                                            user.getDisplayName() != null
+                                                    && !user
+                                                    .getDisplayName()
+                                                    .trim()
+                                                    .isEmpty()
+                                    ) {
+
+                                        name =
+                                                user
+                                                        .getDisplayName()
+                                                        .trim();
+                                    }
+                                }
+                            }
+
+                            if (
+                                    name == null
+                                            || name.isEmpty()
                             ) {
 
                                 name =
-                                        user.getDisplayName().trim();
+                                        getFirebaseDisplayName(
+                                                firebaseUser
+                                        );
                             }
+
+                            tvProfileName.setText(
+                                    name
+                            );
                         }
-                    }
-
-                    if (name == null || name.isEmpty()) {
-
-                        name =
-                                getFirebaseDisplayName(
-                                        firebaseUser
-                                );
-                    }
-
-                    tvProfileName.setText(name);
-                })
+                )
                 .addOnFailureListener(e -> {
 
                     if (!isViewAlive()) {
@@ -197,34 +360,49 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
-    private void loadReportCount(String uid) {
+
+
+    private void loadReportCount(
+            String uid
+    ) {
 
         db.collection("reports")
-                .whereEqualTo("userId", uid)
+                .whereEqualTo(
+                        "userId",
+                        uid
+                )
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(
+                        querySnapshot -> {
 
-                    if (!isViewAlive()) {
-                        return;
-                    }
+                            if (!isViewAlive()) {
+                                return;
+                            }
 
-                    tvReportCount.setText(
-                            String.valueOf(
-                                    querySnapshot.size()
-                            )
-                    );
-                })
+                            tvReportCount.setText(
+                                    String.valueOf(
+                                            querySnapshot.size()
+                                    )
+                            );
+                        }
+                )
                 .addOnFailureListener(e -> {
 
                     if (!isViewAlive()) {
                         return;
                     }
 
-                    tvReportCount.setText("—");
+                    tvReportCount.setText(
+                            "—"
+                    );
                 });
     }
 
-    private void loadFixedReportCount(String uid) {
+
+
+    private void loadFixedReportCount(
+            String uid
+    ) {
 
         db.collection("events")
                 .whereArrayContains(
@@ -232,45 +410,64 @@ public class ProfileFragment extends Fragment {
                         uid
                 )
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(
+                        querySnapshot -> {
 
-                    if (!isViewAlive()) {
-                        return;
-                    }
+                            if (!isViewAlive()) {
+                                return;
+                            }
 
-                    int fixedCount = 0;
+                            int fixedCount = 0;
 
-                    for (QueryDocumentSnapshot document
-                            : querySnapshot) {
+                            for (
+                                    QueryDocumentSnapshot document
+                                    : querySnapshot
+                            ) {
 
-                        Object statusObject =
-                                document.get("status");
+                                Object statusObject =
+                                        document.get(
+                                                "status"
+                                        );
 
-                        if (statusObject == null) {
-                            continue;
+                                if (statusObject == null) {
+                                    continue;
+                                }
+
+                                String status =
+                                        statusObject
+                                                .toString();
+
+                                if (
+                                        "FIXED"
+                                                .equalsIgnoreCase(
+                                                        status
+                                                )
+                                ) {
+
+                                    fixedCount++;
+                                }
+                            }
+
+                            tvFixedCount.setText(
+                                    String.valueOf(
+                                            fixedCount
+                                    )
+                            );
                         }
-
-                        String status =
-                                statusObject.toString();
-
-                        if ("FIXED".equalsIgnoreCase(status)) {
-                            fixedCount++;
-                        }
-                    }
-
-                    tvFixedCount.setText(
-                            String.valueOf(fixedCount)
-                    );
-                })
+                )
                 .addOnFailureListener(e -> {
 
                     if (!isViewAlive()) {
                         return;
                     }
 
-                    tvFixedCount.setText("—");
+                    tvFixedCount.setText(
+                            "—"
+                    );
                 });
     }
+
+
 
     private String getFirebaseDisplayName(
             FirebaseUser firebaseUser
@@ -279,8 +476,12 @@ public class ProfileFragment extends Fragment {
         String displayName =
                 firebaseUser.getDisplayName();
 
-        if (displayName != null
-                && !displayName.trim().isEmpty()) {
+        if (
+                displayName != null
+                        && !displayName
+                        .trim()
+                        .isEmpty()
+        ) {
 
             return displayName.trim();
         }
@@ -288,8 +489,10 @@ public class ProfileFragment extends Fragment {
         String email =
                 firebaseUser.getEmail();
 
-        if (email != null
-                && email.contains("@")) {
+        if (
+                email != null
+                        && email.contains("@")
+        ) {
 
             return email.substring(
                     0,
@@ -300,18 +503,30 @@ public class ProfileFragment extends Fragment {
         return "User";
     }
 
+
+
     private void showSignedOutState() {
 
         if (!isViewAlive()) {
             return;
         }
 
-        tvProfileName.setText("User");
-        tvReportCount.setText("0");
-        tvFixedCount.setText("0");
+        tvProfileName.setText(
+                "User"
+        );
+
+        tvReportCount.setText(
+                "0"
+        );
+
+        tvFixedCount.setText(
+                "0"
+        );
 
         showDefaultProfilePicture();
     }
+
+
 
     private boolean isViewAlive() {
 
@@ -326,8 +541,14 @@ public class ProfileFragment extends Fragment {
         super.onDestroyView();
 
         ivProfilePicture = null;
+
         tvProfileName = null;
         tvReportCount = null;
         tvFixedCount = null;
+
+        tvImportantLocationsEdit = null;
+
+        layoutDummyHomeLocation = null;
+        layoutAddImportantLocationEmpty = null;
     }
 }

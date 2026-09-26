@@ -18,9 +18,8 @@
         android:paddingEnd="16dp"
         android:paddingBottom="24dp">
 
-        <!-- ================================================= -->
-        <!-- PROFILE PICTURE                                   -->
-        <!-- ================================================= -->
+
+        <!-- pfp-->
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="88dp"
@@ -42,6 +41,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+
         <TextView
             android:id="@+id/tv_profile_name"
             android:layout_width="wrap_content"
@@ -53,9 +53,8 @@
             android:textSize="23sp"
             android:textStyle="bold" />
 
-        <!-- ================================================= -->
-        <!-- REPORT STATS                                      -->
-        <!-- ================================================= -->
+
+        <!-- report stats -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -63,6 +62,8 @@
             android:layout_marginTop="28dp"
             android:orientation="horizontal">
 
+
+            <!-- reports -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -100,10 +101,13 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+
             <Space
                 android:layout_width="16dp"
                 android:layout_height="1dp" />
 
+
+            <!-- fixed -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -143,9 +147,8 @@
 
         </LinearLayout>
 
-        <!-- ================================================= -->
-        <!-- IMPORTANT LOCATIONS                               -->
-        <!-- ================================================= -->
+
+        <!-- important locations -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -165,27 +168,62 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tv_important_locations_view_all"
+                android:id="@+id/tv_important_locations_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="false"
-                android:focusable="false"
+                android:clickable="true"
+                android:focusable="true"
                 android:paddingStart="8dp"
                 android:paddingTop="4dp"
                 android:paddingEnd="4dp"
                 android:paddingBottom="4dp"
-                android:text="View All"
+                android:text="Edit"
                 android:textColor="@color/primary"
                 android:textSize="12sp" />
 
         </LinearLayout>
 
-        <!-- Home -->
-        <com.google.android.material.card.MaterialCardView
+
+        <LinearLayout
+            android:id="@+id/layout_add_important_location_empty"
             android:layout_width="match_parent"
             android:layout_height="72dp"
             android:layout_marginTop="10dp"
+            android:background="@drawable/bg_add_location_dashed"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+"
+                android:textColor="@color/primary"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:text="Add Location"
+                android:textColor="@color/primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/layout_dummy_home_location"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginTop="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="@color/cardBackground"
             app:cardCornerRadius="4dp"
             app:cardElevation="1dp"
@@ -215,6 +253,7 @@
 
                 </FrameLayout>
 
+
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -234,7 +273,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Lorem ipsum dolor sit amet"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="123 Main Street, Round Rock, TX"
                         android:textColor="@color/textSecondary"
                         android:textSize="12sp" />
 
@@ -244,135 +285,8 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Work -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:layout_marginTop="10dp"
-            app:cardBackgroundColor="@color/cardBackground"
-            app:cardCornerRadius="4dp"
-            app:cardElevation="1dp"
-            app:strokeColor="@color/popupCardBackground"
-            app:strokeWidth="1dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
-
-                <FrameLayout
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
-                    android:background="@drawable/ic_setting_bg_gray"
-                    android:padding="10dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:contentDescription="Work"
-                        android:src="@drawable/ic_profile_work"
-                        app:tint="@color/profileLocationNeutralIcon" />
-
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Work"
-                        android:textColor="@color/tertiary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Lorem ipsum dolor sit amet"
-                        android:textColor="@color/textSecondary"
-                        android:textSize="12sp" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- School -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:layout_marginTop="10dp"
-            app:cardBackgroundColor="@color/cardBackground"
-            app:cardCornerRadius="4dp"
-            app:cardElevation="1dp"
-            app:strokeColor="@color/popupCardBackground"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
-
-                <FrameLayout
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
-                    android:background="@drawable/ic_setting_bg_orange"
-                    android:padding="10dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:contentDescription="School"
-                        android:src="@drawable/ic_profile_school"
-                        app:tint="@color/profileLocationNeutralIcon" />
-
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="School"
-                        android:textColor="@color/tertiary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Lorem ipsum dolor sit amet"
-                        android:textColor="@color/textSecondary"
-                        android:textSize="12sp" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- ================================================= -->
-        <!-- RECENT REPORTS                                    -->
-        <!-- ================================================= -->
+        <!-- recent reports-->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -408,7 +322,7 @@
 
         </LinearLayout>
 
-        <!-- Single recent report placeholder -->
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="80dp"
@@ -423,10 +337,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
+                <!-- Green left status line -->
                 <View
                     android:layout_width="4dp"
                     android:layout_height="match_parent"
                     android:background="@color/primary" />
+
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -460,6 +376,7 @@
                             android:textSize="12sp" />
 
                     </LinearLayout>
+
 
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="wrap_content"
