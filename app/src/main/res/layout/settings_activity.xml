@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Toolbar -->
+    <!-- toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -36,7 +36,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- APPEARANCE SECTION -->
+            <!-- appearance section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -91,7 +91,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- PREFERENCES SECTION -->
+            <!-- preferences section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -116,7 +116,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- Notifications Row -->
+                    <!-- notifications row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -158,7 +158,7 @@
                         android:layout_marginStart="66dp"
                         android:background="@color/cardBackground" />
 
-                    <!-- Privacy & Safety Row -->
+                    <!-- privacy and safety row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -200,7 +200,7 @@
                         android:layout_marginStart="66dp"
                         android:background="@color/cardBackground" />
 
-                    <!-- Anonymous Reporting Row -->
+                    <!-- anonymous reporting row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -248,7 +248,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ABOUT SECTION -->
+            <!-- about section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -342,7 +342,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- LOGOUT -->
+            <!-- logout -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

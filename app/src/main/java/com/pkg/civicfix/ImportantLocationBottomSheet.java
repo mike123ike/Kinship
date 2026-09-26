@@ -21,6 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
+import com.firebase.geofire.GeoFireUtils;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -33,84 +35,219 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+import com.pkg.civicfix.model.ImportantLocation;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ImportantLocationBottomSheet
         extends BottomSheetDialogFragment
         implements OnMapReadyCallback {
 
-    private static final String ARG_PRESET = "preset";
-    private static final String ARG_EDITING = "editing";
-    private static final String ARG_NAME = "name";
-    private static final String ARG_ADDRESS = "address";
-    private static final String ARG_LAT = "lat";
-    private static final String ARG_LNG = "lng";
+    public static final String RESULT_KEY =
+            "important_location_changed";
+
+    private static final String ARG_PRESET =
+            "preset";
+
+    private static final String ARG_EDITING =
+            "editing";
+
+    private static final String ARG_LOCATION_ID =
+            "locationId";
+
+    private static final String ARG_TYPE =
+            "type";
+
+    private static final String ARG_NAME =
+            "name";
+
+    private static final String ARG_ADDRESS =
+            "address";
+
+    private static final String ARG_LAT =
+            "lat";
+
+    private static final String ARG_LNG =
+            "lng";
+
+    private static final String ARG_HAS_LOCATION =
+            "hasLocation";
 
     private boolean isPreset;
     private boolean isEditing;
+    private boolean hasSelectedLocation;
 
-    private String locationName = "";
-    private String address = "";
+    private String locationId;
+    private String locationType;
+    private String locationName;
+    private String address;
 
-    private double selectedLat = 0;
-    private double selectedLng = 0;
+    private double selectedLat;
+    private double selectedLng;
 
     private MapView mapPreview;
     private GoogleMap previewMap;
 
     private View layoutName;
+
     private EditText etName;
 
     private TextView tvTitle;
     private TextView tvAddress;
 
-    public static ImportantLocationBottomSheet newPreset(
-            String presetName,
-            boolean editing,
-            String address,
-            double lat,
-            double lng
+    private TextView btnRemove;
+    private TextView btnSave;
+
+    // factory for preset location types
+    public static ImportantLocationBottomSheet
+    newPreset(
+            String type,
+            @Nullable ImportantLocation existing
     ) {
 
         ImportantLocationBottomSheet sheet =
                 new ImportantLocationBottomSheet();
 
-        Bundle args = new Bundle();
+        Bundle args =
+                new Bundle();
 
-        args.putBoolean(ARG_PRESET, true);
-        args.putBoolean(ARG_EDITING, editing);
-        args.putString(ARG_NAME, presetName);
-        args.putString(ARG_ADDRESS, address);
-        args.putDouble(ARG_LAT, lat);
-        args.putDouble(ARG_LNG, lng);
+        args.putBoolean(
+                ARG_PRESET,
+                true
+        );
+
+        args.putBoolean(
+                ARG_EDITING,
+                existing != null
+        );
+
+        args.putString(
+                ARG_TYPE,
+                type
+        );
+
+        args.putString(
+                ARG_LOCATION_ID,
+                existing != null
+                        ? existing.getId()
+                        : type.toLowerCase(
+                        Locale.US
+                )
+        );
+
+        args.putString(
+                ARG_NAME,
+                getPresetName(type)
+        );
+
+        args.putString(
+                ARG_ADDRESS,
+                existing != null
+                        ? existing.getDisplayAddress()
+                        : ""
+        );
+
+        args.putDouble(
+                ARG_LAT,
+                existing != null
+                        ? existing.getLatitude()
+                        : 0
+        );
+
+        args.putDouble(
+                ARG_LNG,
+                existing != null
+                        ? existing.getLongitude()
+                        : 0
+        );
+
+        args.putBoolean(
+                ARG_HAS_LOCATION,
+                existing != null
+        );
 
         sheet.setArguments(args);
 
         return sheet;
     }
 
-    public static ImportantLocationBottomSheet newCustom(
-            boolean editing,
-            String name,
-            String address,
-            double lat,
-            double lng
+    // factory for custom location types
+    public static ImportantLocationBottomSheet
+    newCustom(
+            @Nullable ImportantLocation existing
     ) {
 
         ImportantLocationBottomSheet sheet =
                 new ImportantLocationBottomSheet();
 
-        Bundle args = new Bundle();
+        Bundle args =
+                new Bundle();
 
-        args.putBoolean(ARG_PRESET, false);
-        args.putBoolean(ARG_EDITING, editing);
-        args.putString(ARG_NAME, name);
-        args.putString(ARG_ADDRESS, address);
-        args.putDouble(ARG_LAT, lat);
-        args.putDouble(ARG_LNG, lng);
+        args.putBoolean(
+                ARG_PRESET,
+                false
+        );
+
+        args.putBoolean(
+                ARG_EDITING,
+                existing != null
+        );
+
+        args.putString(
+                ARG_TYPE,
+                ImportantLocation.TYPE_CUSTOM
+        );
+
+        args.putString(
+                ARG_LOCATION_ID,
+                existing != null
+                        ? existing.getId()
+                        : null
+        );
+
+        args.putString(
+                ARG_NAME,
+                existing != null
+                        ? existing.getName()
+                        : ""
+        );
+
+        args.putString(
+                ARG_ADDRESS,
+                existing != null
+                        ? existing.getDisplayAddress()
+                        : ""
+        );
+
+        args.putDouble(
+                ARG_LAT,
+                existing != null
+                        ? existing.getLatitude()
+                        : 0
+        );
+
+        args.putDouble(
+                ARG_LNG,
+                existing != null
+                        ? existing.getLongitude()
+                        : 0
+        );
+
+        args.putBoolean(
+                ARG_HAS_LOCATION,
+                existing != null
+        );
 
         sheet.setArguments(args);
 
@@ -137,7 +274,10 @@ public class ImportantLocationBottomSheet
             @NonNull View view,
             @Nullable Bundle savedInstanceState
     ) {
-        super.onViewCreated(view, savedInstanceState);
+        super.onViewCreated(
+                view,
+                savedInstanceState
+        );
 
         readArguments();
 
@@ -161,6 +301,16 @@ public class ImportantLocationBottomSheet
                         R.id.et_location_name
                 );
 
+        btnRemove =
+                view.findViewById(
+                        R.id.btn_remove_location
+                );
+
+        btnSave =
+                view.findViewById(
+                        R.id.btn_save_location
+                );
+
         mapPreview =
                 view.findViewById(
                         R.id.map_location_preview
@@ -170,63 +320,51 @@ public class ImportantLocationBottomSheet
         configureNameField();
         configureAddress();
 
-        mapPreview.onCreate(savedInstanceState);
-        mapPreview.getMapAsync(this);
+        mapPreview.onCreate(
+                savedInstanceState
+        );
+
+        mapPreview.getMapAsync(
+                this
+        );
 
         view.findViewById(
-                        R.id.map_click_overlay
-                )
-                .setOnClickListener(v ->
-                        openLocationPicker()
-                );
+                R.id.map_click_overlay
+        ).setOnClickListener(v ->
+                openLocationPicker()
+        );
 
         view.findViewById(
-                        R.id.btn_use_current_location
-                )
-                .setOnClickListener(v ->
-                        useCurrentLocation()
-                );
+                R.id.btn_use_current_location
+        ).setOnClickListener(v ->
+                useCurrentLocation()
+        );
 
         view.findViewById(
-                        R.id.btn_cancel_location
-                )
-                .setOnClickListener(v ->
-                        dismiss()
-                );
+                R.id.btn_cancel_location
+        ).setOnClickListener(v ->
+                dismiss()
+        );
 
-        View removeButton =
-                view.findViewById(
-                        R.id.btn_remove_location
-                );
-
-        removeButton.setVisibility(
+        btnRemove.setVisibility(
                 isEditing
                         ? View.VISIBLE
                         : View.GONE
         );
 
-        removeButton.setOnClickListener(v -> {
+        btnRemove.setOnClickListener(v ->
+                removeLocation()
+        );
 
-            Toast.makeText(
-                    requireContext(),
-                    "UI test: location removed",
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            dismiss();
-        });
-
-        view.findViewById(
-                        R.id.btn_save_location
-                )
-                .setOnClickListener(v ->
-                        validateAndSave()
-                );
+        btnSave.setOnClickListener(v ->
+                saveLocation()
+        );
     }
 
     private void readArguments() {
 
-        Bundle args = getArguments();
+        Bundle args =
+                getArguments();
 
         if (args == null) {
             return;
@@ -234,14 +372,22 @@ public class ImportantLocationBottomSheet
 
         isPreset =
                 args.getBoolean(
-                        ARG_PRESET,
-                        false
+                        ARG_PRESET
                 );
 
         isEditing =
                 args.getBoolean(
-                        ARG_EDITING,
-                        false
+                        ARG_EDITING
+                );
+
+        locationId =
+                args.getString(
+                        ARG_LOCATION_ID
+                );
+
+        locationType =
+                args.getString(
+                        ARG_TYPE
                 );
 
         locationName =
@@ -258,14 +404,17 @@ public class ImportantLocationBottomSheet
 
         selectedLat =
                 args.getDouble(
-                        ARG_LAT,
-                        0
+                        ARG_LAT
                 );
 
         selectedLng =
                 args.getDouble(
-                        ARG_LNG,
-                        0
+                        ARG_LNG
+                );
+
+        hasSelectedLocation =
+                args.getBoolean(
+                        ARG_HAS_LOCATION
                 );
     }
 
@@ -273,33 +422,22 @@ public class ImportantLocationBottomSheet
 
         if (isPreset) {
 
-            if (isEditing) {
-
-                tvTitle.setText(
-                        "Edit " + locationName
-                );
-
-            } else {
-
-                tvTitle.setText(
-                        "Add " + locationName
-                );
-            }
+            tvTitle.setText(
+                    (
+                            isEditing
+                                    ? "Edit "
+                                    : "Add "
+                    )
+                            + locationName
+            );
 
         } else {
 
-            if (isEditing) {
-
-                tvTitle.setText(
-                        "Edit Location"
-                );
-
-            } else {
-
-                tvTitle.setText(
-                        "Add Location"
-                );
-            }
+            tvTitle.setText(
+                    isEditing
+                            ? "Edit Location"
+                            : "Add Location"
+            );
         }
     }
 
@@ -311,22 +449,24 @@ public class ImportantLocationBottomSheet
                     View.GONE
             );
 
-            return;
+        } else {
+
+            layoutName.setVisibility(
+                    View.VISIBLE
+            );
+
+            etName.setText(
+                    locationName
+            );
         }
-
-        layoutName.setVisibility(
-                View.VISIBLE
-        );
-
-        etName.setText(
-                locationName
-        );
     }
 
     private void configureAddress() {
 
-        if (address == null
-                || address.trim().isEmpty()) {
+        if (
+                address == null
+                        || address.trim().isEmpty()
+        ) {
 
             tvAddress.setText(
                     "No location selected"
@@ -340,6 +480,306 @@ public class ImportantLocationBottomSheet
         }
     }
 
+    // save location details to firestore
+
+    private void saveLocation() {
+
+        FirebaseUser user =
+                FirebaseAuth
+                        .getInstance()
+                        .getCurrentUser();
+
+        if (user == null) {
+
+            Toast.makeText(
+                    requireContext(),
+                    "You must be signed in",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        if (!isPreset) {
+
+            String enteredName =
+                    etName.getText() == null
+                            ? ""
+                            : etName
+                              .getText()
+                              .toString()
+                              .trim();
+
+            if (enteredName.isEmpty()) {
+
+                etName.setError(
+                        "Enter a location name"
+                );
+
+                return;
+            }
+
+            locationName =
+                    enteredName;
+        }
+
+        if (!hasSelectedLocation) {
+
+            Toast.makeText(
+                    requireContext(),
+                    "Choose a location first",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        setSavingState(true);
+
+        FirebaseFirestore db =
+                FirebaseFirestore
+                        .getInstance();
+
+        CollectionReference collection =
+                db.collection("users")
+                        .document(user.getUid())
+                        .collection(
+                                "importantLocations"
+                        );
+
+        DocumentReference document;
+
+        if (isPreset) {
+
+            document =
+                    collection.document(
+                            locationType
+                                    .toLowerCase(
+                                            Locale.US
+                                    )
+                    );
+
+        } else if (
+                isEditing
+                        && locationId != null
+        ) {
+
+            document =
+                    collection.document(
+                            locationId
+                    );
+
+        } else {
+
+            document =
+                    collection.document();
+
+            locationId =
+                    document.getId();
+        }
+
+        String geohash =
+                GeoFireUtils
+                        .getGeoHashForLocation(
+                                new GeoLocation(
+                                        selectedLat,
+                                        selectedLng
+                                )
+                        );
+
+        Map<String, Object> data =
+                new HashMap<>();
+
+        data.put(
+                "name",
+                locationName
+        );
+
+        data.put(
+                "type",
+                locationType
+        );
+
+        data.put(
+                "latitude",
+                selectedLat
+        );
+
+        data.put(
+                "longitude",
+                selectedLng
+        );
+
+        data.put(
+                "geohash",
+                geohash
+        );
+
+        data.put(
+                "displayAddress",
+                address == null
+                        ? ""
+                        : address
+        );
+
+        data.put(
+                "updatedAt",
+                FieldValue.serverTimestamp()
+        );
+
+        if (!isEditing) {
+
+            data.put(
+                    "createdAt",
+                    FieldValue.serverTimestamp()
+            );
+        }
+
+        document.set(
+                        data,
+                        SetOptions.merge()
+                )
+                .addOnSuccessListener(unused -> {
+
+                    if (getContext() == null) {
+                        return;
+                    }
+
+                    notifyLocationChanged();
+
+                    Toast.makeText(
+                            requireContext(),
+                            locationName + " saved",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    dismiss();
+                })
+                .addOnFailureListener(e -> {
+
+                    if (getContext() == null) {
+                        return;
+                    }
+
+                    setSavingState(false);
+
+                    Toast.makeText(
+                            requireContext(),
+                            "Failed to save location: "
+                                    + e.getMessage(),
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
+    }
+
+    // delete location document from firestore
+
+    private void removeLocation() {
+
+        if (
+                !isEditing
+                        || locationId == null
+        ) {
+            return;
+        }
+
+        FirebaseUser user =
+                FirebaseAuth
+                        .getInstance()
+                        .getCurrentUser();
+
+        if (user == null) {
+            return;
+        }
+
+        setSavingState(true);
+
+        FirebaseFirestore
+                .getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .collection(
+                        "importantLocations"
+                )
+                .document(locationId)
+                .delete()
+                .addOnSuccessListener(unused -> {
+
+                    if (getContext() == null) {
+                        return;
+                    }
+
+                    notifyLocationChanged();
+
+                    Toast.makeText(
+                            requireContext(),
+                            locationName + " removed",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    dismiss();
+                })
+                .addOnFailureListener(e -> {
+
+                    if (getContext() == null) {
+                        return;
+                    }
+
+                    setSavingState(false);
+
+                    Toast.makeText(
+                            requireContext(),
+                            "Failed to remove location: "
+                                    + e.getMessage(),
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
+    }
+
+    private void setSavingState(
+            boolean saving
+    ) {
+
+        btnSave.setEnabled(
+                !saving
+        );
+
+        btnRemove.setEnabled(
+                !saving
+        );
+
+        btnSave.setAlpha(
+                saving
+                        ? 0.5f
+                        : 1f
+        );
+
+        btnRemove.setAlpha(
+                saving
+                        ? 0.5f
+                        : 1f
+        );
+    }
+
+    private void notifyLocationChanged() {
+
+        Bundle result =
+                new Bundle();
+
+        result.putBoolean(
+                "changed",
+                true
+        );
+
+        getParentFragmentManager()
+                .setFragmentResult(
+                        RESULT_KEY,
+                        result
+                );
+    }
+
+    // open map picker activity
+
     private void openLocationPicker() {
 
         Intent intent =
@@ -348,7 +788,23 @@ public class ImportantLocationBottomSheet
                         LocationPickerActivity.class
                 );
 
-        locationPicker.launch(intent);
+        // center picker on existing location if present
+        if (hasSelectedLocation) {
+
+            intent.putExtra(
+                    "initialLat",
+                    selectedLat
+            );
+
+            intent.putExtra(
+                    "initialLng",
+                    selectedLng
+            );
+        }
+
+        locationPicker.launch(
+                intent
+        );
     }
 
     private final ActivityResultLauncher<Intent>
@@ -366,23 +822,31 @@ public class ImportantLocationBottomSheet
                                         || result.getData()
                                         == null
                         ) {
+
                             return;
                         }
 
                         selectedLat =
-                                result
-                                        .getData()
+                                result.getData()
                                         .getDoubleExtra(
                                                 "lat",
                                                 0
                                         );
 
                         selectedLng =
-                                result
-                                        .getData()
+                                result.getData()
                                         .getDoubleExtra(
                                                 "lng",
                                                 0
+                                        );
+
+                        hasSelectedLocation =
+                                true;
+
+                        String returnedAddress =
+                                result.getData()
+                                        .getStringExtra(
+                                                "address"
                                         );
 
                         updateMapPreview(
@@ -390,25 +854,47 @@ public class ImportantLocationBottomSheet
                                 selectedLng
                         );
 
-                        reverseGeocode(
-                                selectedLat,
-                                selectedLng
-                        );
+                        if (
+                                returnedAddress != null
+                                        && !returnedAddress
+                                        .isEmpty()
+                        ) {
+
+                            address =
+                                    returnedAddress;
+
+                            tvAddress.setText(
+                                    address
+                            );
+
+                        } else {
+
+                            reverseGeocode(
+                                    selectedLat,
+                                    selectedLng
+                            );
+                        }
                     }
             );
+
+    // fetch device current location
 
     private void useCurrentLocation() {
 
         if (
-                ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                )
-                        != PackageManager.PERMISSION_GRANTED
+                ActivityCompat
+                        .checkSelfPermission(
+                                requireContext(),
+                                Manifest.permission
+                                        .ACCESS_FINE_LOCATION
+                        )
+                        != PackageManager
+                        .PERMISSION_GRANTED
         ) {
 
             locationPermission.launch(
-                    Manifest.permission.ACCESS_FINE_LOCATION
+                    Manifest.permission
+                            .ACCESS_FINE_LOCATION
             );
 
             return;
@@ -444,12 +930,16 @@ public class ImportantLocationBottomSheet
     private void fetchCurrentLocation() {
 
         if (
-                ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                )
-                        != PackageManager.PERMISSION_GRANTED
+                ActivityCompat
+                        .checkSelfPermission(
+                                requireContext(),
+                                Manifest.permission
+                                        .ACCESS_FINE_LOCATION
+                        )
+                        != PackageManager
+                        .PERMISSION_GRANTED
         ) {
+
             return;
         }
 
@@ -479,6 +969,9 @@ public class ImportantLocationBottomSheet
                     selectedLng =
                             location.getLongitude();
 
+                    hasSelectedLocation =
+                            true;
+
                     updateMapPreview(
                             selectedLat,
                             selectedLng
@@ -491,33 +984,39 @@ public class ImportantLocationBottomSheet
                 });
     }
 
+    // map preview and geocoding logic
+
     @Override
     public void onMapReady(
             @NonNull GoogleMap googleMap
     ) {
 
-        previewMap = googleMap;
+        previewMap =
+                googleMap;
 
         previewMap
                 .getUiSettings()
-                .setAllGesturesEnabled(false);
+                .setAllGesturesEnabled(
+                        false
+                );
 
         previewMap
                 .getUiSettings()
-                .setZoomControlsEnabled(false);
+                .setZoomControlsEnabled(
+                        false
+                );
 
         previewMap
                 .getUiSettings()
-                .setMapToolbarEnabled(false);
+                .setMapToolbarEnabled(
+                        false
+                );
 
         applyMapStyle(
                 previewMap
         );
 
-        if (
-                selectedLat != 0
-                        || selectedLng != 0
-        ) {
+        if (hasSelectedLocation) {
 
             updateMapPreview(
                     selectedLat,
@@ -596,64 +1095,33 @@ public class ImportantLocationBottomSheet
 
             e.printStackTrace();
 
+            address = "";
+
             tvAddress.setText(
                     "Selected location"
             );
         }
     }
 
-    private void validateAndSave() {
+    private static String getPresetName(
+            String type
+    ) {
 
-        if (!isPreset) {
-
-            String enteredName =
-                    etName.getText() == null
-                            ? ""
-                            : etName
-                              .getText()
-                              .toString()
-                              .trim();
-
-            if (enteredName.isEmpty()) {
-
-                etName.setError(
-                        "Enter a location name"
-                );
-
-                etName.requestFocus();
-
-                return;
-            }
-
-            etName.setError(null);
-
-            locationName =
-                    enteredName;
+        if (
+                ImportantLocation.TYPE_HOME
+                        .equals(type)
+        ) {
+            return "Home";
         }
 
         if (
-                selectedLat == 0
-                        && selectedLng == 0
+                ImportantLocation.TYPE_WORK
+                        .equals(type)
         ) {
-
-            Toast.makeText(
-                    requireContext(),
-                    "Choose a location first",
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            return;
+            return "Work";
         }
 
-        Toast.makeText(
-                requireContext(),
-                "UI test: "
-                        + locationName
-                        + " saved",
-                Toast.LENGTH_SHORT
-        ).show();
-
-        dismiss();
+        return "School";
     }
 
     private void applyMapStyle(
@@ -694,11 +1162,8 @@ public class ImportantLocationBottomSheet
                 dialog instanceof BottomSheetDialog
         ) {
 
-            BottomSheetDialog bottomSheetDialog =
-                    (BottomSheetDialog) dialog;
-
             View bottomSheet =
-                    bottomSheetDialog
+                    ((BottomSheetDialog) dialog)
                             .findViewById(
                                     com.google.android.material
                                             .R.id
@@ -713,10 +1178,13 @@ public class ImportantLocationBottomSheet
                         );
 
                 behavior.setState(
-                        BottomSheetBehavior.STATE_EXPANDED
+                        BottomSheetBehavior
+                                .STATE_EXPANDED
                 );
 
-                behavior.setSkipCollapsed(true);
+                behavior.setSkipCollapsed(
+                        true
+                );
             }
         }
     }
@@ -747,13 +1215,8 @@ public class ImportantLocationBottomSheet
             mapPreview.onDestroy();
         }
 
-        previewMap = null;
         mapPreview = null;
-
-        tvTitle = null;
-        tvAddress = null;
-        layoutName = null;
-        etName = null;
+        previewMap = null;
 
         super.onDestroyView();
     }
@@ -764,17 +1227,6 @@ public class ImportantLocationBottomSheet
 
         if (mapPreview != null) {
             mapPreview.onLowMemory();
-        }
-    }
-
-    @Override
-    public void onSaveInstanceState(
-            @NonNull Bundle outState
-    ) {
-        super.onSaveInstanceState(outState);
-
-        if (mapPreview != null) {
-            mapPreview.onSaveInstanceState(outState);
         }
     }
 }

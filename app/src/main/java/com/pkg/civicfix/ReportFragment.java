@@ -30,7 +30,7 @@ import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.firebase.geofire.GeoFireUtils;
 import com.firebase.geofire.GeoLocation;
-import com.firebase.geofire.core.GeoHash;
+import com.firebase.geofire.GeoQueryBounds;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -42,8 +42,8 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.Slider;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -51,17 +51,17 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.pkg.civicfix.BuildConfig;
 import com.pkg.civicfix.model.Event;
 import com.pkg.civicfix.model.Report;
+import com.pkg.civicfix.model.User;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReportFragment extends Fragment implements OnMapReadyCallback {
 
@@ -168,14 +168,16 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    // uploads the image to cloudinary and runs the cluster logic
     private void uploadImageThenSubmit() {
         MediaManager.get()
                 .upload(selectedImageUri)
                 .unsigned(BuildConfig.UPLOAD_PRESET)
                 .callback(new UploadCallback() {
-                    @Override public void onStart(String requestId) {}
-                    @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
+                    @Override
+                    public void onStart(String requestId) {}
+
+                    @Override
+                    public void onProgress(String requestId, long bytes, long totalBytes) {}
 
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
@@ -192,13 +194,14 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
                                 Toast.LENGTH_SHORT).show();
                     }
 
-                    @Override public void onReschedule(String requestId, ErrorInfo error) {}
+                    @Override
+                    public void onReschedule(String requestId, ErrorInfo error) {}
                 })
                 .dispatch();
     }
 
     private void runClusteringLogic(String imageUrl) {
-        if (getContext() == null) return;
+        if (getContext() == null || auth.getCurrentUser() == null) return;
 
         String uid = auth.getCurrentUser().getUid();
         String categoryStr = dropdown.getText().toString().toUpperCase();
@@ -207,14 +210,11 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         String geohash = GeoFireUtils.getGeoHashForLocation(
                 new GeoLocation(selectedLat, selectedLng));
 
-        // generates geohash bounds for 0.2 miles, we could change this for more accuracy
-        List<com.firebase.geofire.GeoQueryBounds> bounds =
-                GeoFireUtils.getGeoHashQueryBounds(
-                        new GeoLocation(selectedLat, selectedLng), 322);
+        List<GeoQueryBounds> bounds = GeoFireUtils.getGeoHashQueryBounds(
+                new GeoLocation(selectedLat, selectedLng), 322);
 
-        // queries firebase for each geohash bound
         List<com.google.android.gms.tasks.Task<QuerySnapshot>> tasks = new ArrayList<>();
-        for (com.firebase.geofire.GeoQueryBounds bound : bounds) {
+        for (GeoQueryBounds bound : bounds) {
             Query q = db.collection("events")
                     .whereEqualTo("category", categoryStr)
                     .orderBy("geohash")
@@ -229,25 +229,27 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
 
                     DocumentSnapshot matchedEvent = null;
 
-                    // go through all bounds and finds match within 0.2 miles
                     for (com.google.android.gms.tasks.Task<QuerySnapshot> task : tasks) {
-                        if (!task.isSuccessful()) continue;
+                        if (!task.isSuccessful() || task.getResult() == null) continue;
                         for (DocumentSnapshot doc : task.getResult().getDocuments()) {
-                            double eventLat = doc.getDouble("latitude");
-                            double eventLng = doc.getDouble("longitude");
-                            double distanceM = GeoFireUtils.getDistanceBetween(
-                                    new GeoLocation(selectedLat, selectedLng),
-                                    new GeoLocation(eventLat, eventLng));
-                            if (distanceM <= 322) {
-                                matchedEvent = doc;
-                                break;
+                            Double eventLat = doc.getDouble("latitude");
+                            Double eventLng = doc.getDouble("longitude");
+
+                            if (eventLat != null && eventLng != null) {
+                                double distanceM = GeoFireUtils.getDistanceBetween(
+                                        new GeoLocation(selectedLat, selectedLng),
+                                        new GeoLocation(eventLat, eventLng));
+                                if (distanceM <= 322) {
+                                    matchedEvent = doc;
+                                    break;
+                                }
                             }
                         }
                         if (matchedEvent != null) break;
                     }
 
                     if (matchedEvent != null) {
-                        // checks whether the event is reported already by the user
+                        @SuppressWarnings("unchecked")
                         List<String> reporterIds = (List<String>) matchedEvent.get("reporterIds");
                         if (reporterIds != null && reporterIds.contains(uid)) {
                             resetSubmitButton();
@@ -256,13 +258,12 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
                                     Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        //update the event
+
                         updateExistingEvent(matchedEvent, uid, severity, imageUrl,
-                                categoryStr, description, geohash, imageUrl);
+                                categoryStr, description, geohash);
                     } else {
-                        //if there isnt a map it makes a new event
                         createNewEvent(uid, categoryStr, severity, imageUrl,
-                                geohash, description, imageUrl);
+                                geohash, description);
                     }
                 });
     }
@@ -270,29 +271,30 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
     private void updateExistingEvent(DocumentSnapshot eventDoc, String uid,
                                      int severity, String imageUrl,
                                      String category, String description,
-                                     String geohash, String imgUrl) {
+                                     String geohash) {
         String eventId = eventDoc.getId();
-        long currentCount = eventDoc.getLong("uniqueUserCount");
-        double currentSeveritySum = eventDoc.getDouble("totalSeveritySum");
+        Long currentCount = eventDoc.getLong("uniqueUserCount");
+        Double currentSeveritySum = eventDoc.getDouble("totalSeveritySum");
 
-        long newCount = currentCount + 1;
-        double newSeveritySum = currentSeveritySum + severity;
+        long count = currentCount != null ? currentCount : 0;
+        double severitySum = currentSeveritySum != null ? currentSeveritySum : 0;
+
+        long newCount = count + 1;
+        double newSeveritySum = severitySum + severity;
         double newAvgSeverity = newSeveritySum / newCount;
 
-        Map<String, Object> updates = new java.util.HashMap<>();
+        Map<String, Object> updates = new HashMap<>();
         updates.put("reporterIds", FieldValue.arrayUnion(uid));
         updates.put("uniqueUserCount", FieldValue.increment(1));
         updates.put("reportCount", FieldValue.increment(1));
         updates.put("totalSeveritySum", FieldValue.increment(severity));
         updates.put("averageSeverity", newAvgSeverity);
-        updates.put("updatedAt", com.google.firebase.Timestamp.now());
+        updates.put("updatedAt", Timestamp.now());
 
-        // adds image url to gallery
         if (imageUrl != null && !imageUrl.isEmpty()) {
             updates.put("photoGallery", FieldValue.arrayUnion(imageUrl));
         }
 
-        // threshold for visiblility
         if (newCount >= 2) {
             updates.put("status", "ACTIVE");
         }
@@ -301,7 +303,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
                 .update(updates)
                 .addOnSuccessListener(aVoid ->
                         writeReportDocument(uid, category, severity, description,
-                                imgUrl, geohash, eventId)
+                                imageUrl, geohash, eventId)
                 )
                 .addOnFailureListener(e -> {
                     if (getContext() == null) return;
@@ -314,7 +316,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
 
     private void createNewEvent(String uid, String category, int severity,
                                 String imageUrl, String geohash,
-                                String description, String imgUrl) {
+                                String description) {
         Event event = new Event(category, severity, uid, imageUrl,
                 selectedLat, selectedLng, geohash);
 
@@ -323,7 +325,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
                 .addOnSuccessListener(docRef -> {
                     String eventId = docRef.getId();
                     writeReportDocument(uid, category, severity, description,
-                            imgUrl, geohash, eventId);
+                            imageUrl, geohash, eventId);
                 })
                 .addOnFailureListener(e -> {
                     if (getContext() == null) return;
@@ -347,8 +349,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
 
                     boolean isAnonymous = false;
                     if (documentSnapshot.exists()) {
-                        com.pkg.civicfix.model.User user =
-                                documentSnapshot.toObject(com.pkg.civicfix.model.User.class);
+                        User user = documentSnapshot.toObject(User.class);
                         if (user != null) {
                             isAnonymous = user.isAnonymousReporting();
                         }
@@ -382,7 +383,6 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
                                         "Failed to submit report: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show();
                             });
-
                 })
                 .addOnFailureListener(e -> {
                     if (getContext() == null) return;
@@ -399,7 +399,6 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         btnSubmit.setText("Submit Report");
     }
 
-    // ── Reset full form after success ──
     private void resetForm() {
         selectedImageUri = null;
         selectedLat = 0;
@@ -409,16 +408,18 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         slider.setValue(5);
         tvDescription.setText("");
         tvSelectedAddress.setVisibility(View.GONE);
+
         if (previewMap != null) previewMap.clear();
+
         if (getView() != null) {
             getView().findViewById(R.id.layout_upload_text).setVisibility(View.VISIBLE);
             getView().findViewById(R.id.layout_upload_prompt)
                     .setBackgroundResource(R.drawable.bg_dashed_border);
         }
+
         resetSubmitButton();
     }
 
-    // ── Map ready ──
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         previewMap = googleMap;
@@ -428,7 +429,6 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         applyMapStyle(previewMap);
     }
 
-    // ── Library picker ──
     private final ActivityResultLauncher<String> launchLibrary = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -442,11 +442,10 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             }
     );
 
-    // ── Camera ──
     private final ActivityResultLauncher<Uri> launchCamera = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
             success -> {
-                if (success && cameraImageUri != null && getView() != null) {
+                if (Boolean.TRUE.equals(success) && cameraImageUri != null && getView() != null) {
                     selectedImageUri = cameraImageUri;
                     imgPreview.setImageURI(cameraImageUri);
                     imgPreview.setVisibility(View.VISIBLE);
@@ -459,7 +458,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
     private final ActivityResultLauncher<String> requestCameraPermission = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(),
             granted -> {
-                if (granted) {
+                if (Boolean.TRUE.equals(granted)) {
                     openCamera();
                 } else {
                     Toast.makeText(requireContext(),
@@ -483,7 +482,6 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    // ── Location picker ──
     private final ActivityResultLauncher<Intent> locationPicker = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -496,15 +494,16 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             }
     );
 
-    // ── GPS ──
     private void useCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
             return;
         }
+
         FusedLocationProviderClient client =
                 LocationServices.getFusedLocationProviderClient(requireContext());
+
         client.getLastLocation().addOnSuccessListener(location -> {
             if (location != null) {
                 selectedLat = location.getLatitude();
@@ -547,12 +546,32 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    // ── MapView lifecycle ──
-    @Override public void onResume() { super.onResume(); if (mapPreview != null) mapPreview.onResume(); }
-    @Override public void onPause() { super.onPause(); if (mapPreview != null) mapPreview.onPause(); }
-    @Override public void onDestroy() { super.onDestroy(); if (mapPreview != null) mapPreview.onDestroy(); }
-    @Override public void onLowMemory() { super.onLowMemory(); if (mapPreview != null) mapPreview.onLowMemory(); }
-    @Override public void onSaveInstanceState(@NonNull Bundle outState) {
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mapPreview != null) mapPreview.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mapPreview != null) mapPreview.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mapPreview != null) mapPreview.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (mapPreview != null) mapPreview.onLowMemory();
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         if (mapPreview != null) mapPreview.onSaveInstanceState(outState);
     }
