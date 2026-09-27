@@ -41,7 +41,7 @@
         android:theme="@style/Theme.CivicFix">
 
 
-        <!-- LOGIN -->
+        <!-- login -->
         <activity
             android:name=".LoginActivity"
             android:exported="true"
@@ -61,7 +61,7 @@
         </activity>
 
 
-        <!-- MAIN APP -->
+        <!-- main app -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
@@ -69,7 +69,7 @@
             android:theme="@style/Theme.CivicFix" />
 
 
-        <!-- SETTINGS -->
+        <!-- settings -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
@@ -77,22 +77,28 @@
             android:theme="@style/Theme.CivicFix" />
 
 
-        <!-- IMPORTANT LOCATIONS -->
+        <!-- important locations -->
         <activity
             android:name=".ImportantLocationsActivity"
             android:exported="false"
             android:label="Important Locations"
             android:theme="@style/Theme.CivicFix" />
 
+        <activity
+            android:name=".MyReportsActivity"
+            android:exported="false"
+            android:label="My Reports"
+            android:theme="@style/Theme.CivicFix" />
 
-        <!-- LOCATION PICKER -->
+
+        <!-- location picker -->
         <activity
             android:name=".LocationPickerActivity"
             android:exported="false"
             android:theme="@style/Theme.CivicFix" />
 
 
-        <!-- FILE PROVIDER -->
+        <!-- file provider -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -106,7 +112,7 @@
         </provider>
 
 
-        <!-- GOOGLE MAPS -->
+        <!-- google maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />

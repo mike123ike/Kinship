@@ -39,6 +39,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+
         <TextView
             android:id="@+id/tv_profile_name"
             android:layout_width="wrap_content"
@@ -139,7 +140,7 @@
         </LinearLayout>
 
 
-        <!-- important locations header -->
+        <!-- important locations -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -165,7 +166,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:padding="6dp"
-                android:text="Edit"
+                android:text="View All and Edit"
                 android:textColor="@color/primary"
                 android:textSize="12sp"
                 android:visibility="gone" />
@@ -173,7 +174,7 @@
         </LinearLayout>
 
 
-        <!-- empty state -->
+        <!-- no important locations -->
         <LinearLayout
             android:id="@+id/layout_add_important_location_empty"
             android:layout_width="match_parent"
@@ -206,7 +207,7 @@
         </LinearLayout>
 
 
-        <!-- real location cards go here -->
+        <!-- up to 3 important locations -->
         <LinearLayout
             android:id="@+id/profile_locations_container"
             android:layout_width="match_parent"
@@ -214,7 +215,7 @@
             android:orientation="vertical" />
 
 
-        <!-- recent reports -->
+        <!-- my reports -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -227,15 +228,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:letterSpacing="0.06"
-                android:text="MY RECENT REPORTS"
+                android:text="MY REPORTS"
                 android:textColor="@color/tertiary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tv_recent_reports_view_all"
+                android:id="@+id/tv_my_reports_view_all"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="6dp"
                 android:text="View All"
                 android:textColor="@color/primary"
@@ -244,83 +248,22 @@
         </LinearLayout>
 
 
-        <com.google.android.material.card.MaterialCardView
+        <!-- max 3 most recent reports -->
+        <LinearLayout
+            android:id="@+id/profile_reports_container"
             android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:layout_marginTop="10dp"
-            app:cardBackgroundColor="@color/cardBackground"
-            app:cardCornerRadius="4dp"
-            app:cardElevation="1dp"
-            app:strokeColor="@color/popupCardBackground"
-            app:strokeWidth="1dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="match_parent"
-                    android:background="@color/primary" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="18dp"
-                    android:paddingEnd="14dp">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Broken Street Light"
-                            android:textColor="@color/tertiary"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Lorem ipsum dolor sit amet"
-                            android:textColor="@color/textSecondary"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        android:layout_marginStart="12dp"
-                        app:cardBackgroundColor="@color/fixedStatusBg"
-                        app:cardCornerRadius="16dp"
-                        app:strokeColor="@color/fixedStatusStroke"
-                        app:strokeWidth="1dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:text="Fixed"
-                            android:textColor="@color/fixedStatusText"
-                            android:textSize="11sp" />
-
-                    </com.google.android.material.card.MaterialCardView>
-
-                </LinearLayout>
-
-            </FrameLayout>
-
-        </com.google.android.material.card.MaterialCardView>
+        <TextView
+            android:id="@+id/tv_profile_reports_empty"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:gravity="center"
+            android:text="No reports yet"
+            android:textColor="@color/textSecondary"
+            android:textSize="13sp"
+            android:visibility="gone" />
 
     </LinearLayout>
 
