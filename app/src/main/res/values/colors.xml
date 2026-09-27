@@ -26,4 +26,16 @@
     <color name="fixedStatusText">#2D5A27</color>
     <color name="fixedStatusStroke">#D7E6D2</color>
     <color name="buttonTextOnPrimary">#FFFFFF</color>
+
+    <color name="reportPendingBg">#FFF4D6</color>
+    <color name="reportPendingText">#9A650F</color>
+    <color name="reportPendingStroke">#E6C56A</color>
+
+    <color name="reportActiveBg">#FCE8E5</color>
+    <color name="reportActiveText">#B94232</color>
+    <color name="reportActiveStroke">#E7AAA1</color>
+
+    <color name="reportInProgressBg">#E5F0F8</color>
+    <color name="reportInProgressText">#2F6FA3</color>
+    <color name="reportInProgressStroke">#9FC5E3</color>
 </resources>

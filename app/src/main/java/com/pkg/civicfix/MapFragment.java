@@ -120,6 +120,7 @@ public class MapFragment extends Fragment
 
     private String selectedImportantLocationId =
             null;
+    private String pendingFocusEventId;
 
     @Nullable
     @Override
@@ -295,10 +296,25 @@ public class MapFragment extends Fragment
 
         loadImportantLocations();
 
-        centerOnUserLocation();
-    }
+        if (
+                pendingFocusEventId != null
+        ) {
 
-    // show event popup fragment
+            String eventId =
+                    pendingFocusEventId;
+
+            pendingFocusEventId =
+                    null;
+
+            focusOnEvent(
+                    eventId
+            );
+
+        } else {
+
+            centerOnUserLocation();
+        }
+    }
 
     public void showEventPopup(
             String eventId
@@ -335,8 +351,6 @@ public class MapFragment extends Fragment
                 "event_popup"
         );
     }
-
-    // load important locations from firestore
 
     private void loadImportantLocations() {
 
@@ -434,8 +448,6 @@ public class MapFragment extends Fragment
                 -1;
     }
 
-    // draw location marker on map
-
     private void drawImportantLocationMarker(
             ImportantLocation location,
             boolean selected
@@ -504,8 +516,6 @@ public class MapFragment extends Fragment
         );
     }
 
-    // update location marker scale based on zoom level
-
     private void updateImportantLocationMarkerScales() {
 
         if (
@@ -568,7 +578,6 @@ public class MapFragment extends Fragment
         }
     }
 
-    // calculate base size for location marker
     private int getImportantLocationBaseSizePx() {
 
         if (mMap == null) {
@@ -641,8 +650,6 @@ public class MapFragment extends Fragment
                 LOCATION_SELECTED_EXTRA_DP
         );
     }
-
-    // handle location selection state
 
     private void selectImportantLocation(
             String locationId,
@@ -748,8 +755,6 @@ public class MapFragment extends Fragment
         selectedImportantLocationId =
                 null;
     }
-
-    // generate location marker bitmap
 
     private BitmapDescriptor
     createImportantLocationMarkerBitmap(
@@ -902,8 +907,6 @@ public class MapFragment extends Fragment
                 );
     }
 
-    // helper methods for location colors and icons
-
     private int getImportantLocationBackgroundColor(
             String type
     ) {
@@ -1019,12 +1022,9 @@ public class MapFragment extends Fragment
         );
     }
 
-    // custom info window adapter
-
     private class ImportantLocationInfoWindowAdapter
             implements GoogleMap.InfoWindowAdapter {
 
-        // return custom view for full info window
         @Nullable
         @Override
         public View getInfoWindow(
@@ -1110,8 +1110,6 @@ public class MapFragment extends Fragment
         }
     }
 
-    // center map on user location
-
     private void centerOnUserLocation() {
 
         if (
@@ -1173,15 +1171,729 @@ public class MapFragment extends Fragment
                 });
     }
 
-    private void applyMapStyle() {
-        // apply map style configuration
+    public void focusOnEvent(
+            String eventId
+    ) {
+
+        if (
+                eventId == null
+                        || eventId.isEmpty()
+        ) {
+
+            return;
+        }
+
+        // map may not have completed onmapready yet
+        if (mMap == null) {
+
+            pendingFocusEventId =
+                    eventId;
+
+            return;
+        }
+
+        clearImportantLocationSelection();
+
+        db.collection("events")
+                .document(eventId)
+                .get()
+                .addOnSuccessListener(document -> {
+
+                    if (
+                            !isAdded()
+                                    || mMap == null
+                                    || !document.exists()
+                    ) {
+
+                        return;
+                    }
+
+
+                    // pending events are unconfirmed and should not be shown on the map
+                    String status =
+                            document.getString(
+                                    "status"
+                            );
+
+                    if (
+                            status == null
+                                    || "PENDING"
+                                    .equalsIgnoreCase(
+                                            status
+                                    )
+                    ) {
+
+                        return;
+                    }
+
+
+                    Double latitude =
+                            document.getDouble(
+                                    "latitude"
+                            );
+
+                    Double longitude =
+                            document.getDouble(
+                                    "longitude"
+                            );
+
+                    if (
+                            latitude == null
+                                    || longitude == null
+                    ) {
+
+                        return;
+                    }
+
+                    LatLng eventLocation =
+                            new LatLng(
+                                    latitude,
+                                    longitude
+                            );
+
+
+                    // zoom close enough for the event marker to be visible
+                    mMap.moveCamera(
+                            CameraUpdateFactory
+                                    .newLatLngZoom(
+                                            eventLocation,
+                                            16f
+                                    )
+                    );
+
+
+                    cachedEvents.put(
+                            eventId,
+                            document
+                    );
+
+
+                    // draw explicit marker if not already present
+                    if (
+                            !drawnMarkers
+                                    .containsKey(
+                                            eventId
+                                    )
+                    ) {
+
+                        drawEventMarker(
+                                document,
+                                latitude,
+                                longitude
+                        );
+
+                    } else {
+
+                        Marker existing =
+                                drawnMarkers.get(
+                                        eventId
+                                );
+
+                        if (existing != null) {
+
+                            existing.setVisible(
+                                    true
+                            );
+                        }
+                    }
+
+
+                    showEventPopup(
+                            eventId
+                    );
+                });
     }
 
     private void loadEventsInView() {
-        // query events in map view bounds
+
+        if (
+                mMap == null
+                        || getContext() == null
+        ) {
+            return;
+        }
+
+        LatLng center =
+                mMap.getCameraPosition()
+                        .target;
+
+        GeoLocation centerGeo =
+                new GeoLocation(
+                        center.latitude,
+                        center.longitude
+                );
+
+        List<GeoQueryBounds> bounds =
+                GeoFireUtils
+                        .getGeoHashQueryBounds(
+                                centerGeo,
+                                QUERY_RADIUS_METERS
+                        );
+
+        List<com.google.android.gms.tasks.Task<QuerySnapshot>>
+                tasks =
+                new ArrayList<>();
+
+        for (
+                GeoQueryBounds bound
+                : bounds
+        ) {
+
+            Query query =
+                    db.collection("events")
+                            .whereEqualTo(
+                                    "status",
+                                    "ACTIVE"
+                            )
+                            .orderBy(
+                                    "geohash"
+                            )
+                            .startAt(
+                                    bound.startHash
+                            )
+                            .endAt(
+                                    bound.endHash
+                            );
+
+            tasks.add(
+                    query.get()
+            );
+        }
+
+        com.google.android.gms.tasks.Tasks
+                .whenAllComplete(
+                        tasks
+                )
+                .addOnCompleteListener(
+                        completedTask -> {
+
+                            if (
+                                    getContext() == null
+                            ) {
+                                return;
+                            }
+
+                            for (
+                                    com.google.android.gms.tasks
+                                            .Task<QuerySnapshot> task
+                                    : tasks
+                            ) {
+
+                                if (
+                                        !task.isSuccessful()
+                                                || task.getResult()
+                                                == null
+                                ) {
+                                    continue;
+                                }
+
+                                for (
+                                        DocumentSnapshot doc
+                                        : task.getResult()
+                                        .getDocuments()
+                                ) {
+
+                                    // already on map
+                                    if (
+                                            drawnMarkers
+                                                    .containsKey(
+                                                            doc.getId()
+                                                    )
+                                    ) {
+                                        continue;
+                                    }
+
+                                    Double lat =
+                                            doc.getDouble(
+                                                    "latitude"
+                                            );
+
+                                    Double lng =
+                                            doc.getDouble(
+                                                    "longitude"
+                                            );
+
+                                    if (
+                                            lat == null
+                                                    || lng == null
+                                    ) {
+                                        continue;
+                                    }
+
+                                    // trim rectangular bounds to circular radius
+                                    double distance =
+                                            GeoFireUtils
+                                                    .getDistanceBetween(
+                                                            centerGeo,
+                                                            new GeoLocation(
+                                                                    lat,
+                                                                    lng
+                                                            )
+                                                    );
+
+                                    if (
+                                            distance
+                                                    > QUERY_RADIUS_METERS
+                                    ) {
+                                        continue;
+                                    }
+
+                                    cachedEvents.put(
+                                            doc.getId(),
+                                            doc
+                                    );
+
+                                    drawEventMarker(
+                                            doc,
+                                            lat,
+                                            lng
+                                    );
+                                }
+                            }
+                        }
+                );
+    }
+
+    private void drawEventMarker(
+            DocumentSnapshot doc,
+            double lat,
+            double lng
+    ) {
+
+        if (mMap == null) {
+            return;
+        }
+
+        String eventId =
+                doc.getId();
+
+        String category =
+                doc.getString(
+                        "category"
+                );
+
+        Double averageSeverity =
+                doc.getDouble(
+                        "averageSeverity"
+                );
+
+        if (averageSeverity == null) {
+
+            averageSeverity =
+                    1.0;
+        }
+
+        int circleColor =
+                getSeverityColor(
+                        averageSeverity
+                );
+
+        int iconRes =
+                getCategoryIcon(
+                        category
+                );
+
+        float zoom =
+                mMap.getCameraPosition()
+                        .zoom;
+
+        int markerSize =
+                getMarkerSize(
+                        zoom
+                );
+
+        // hide marker when zoomed out
+        if (markerSize <= 0) {
+            return;
+        }
+
+        BitmapDescriptor markerBitmap =
+                createMarkerBitmap(
+                        circleColor,
+                        iconRes,
+                        markerSize
+                );
+
+        MarkerOptions options =
+                new MarkerOptions()
+                        .position(
+                                new LatLng(
+                                        lat,
+                                        lng
+                                )
+                        )
+                        .icon(
+                                markerBitmap
+                        )
+                        .anchor(
+                                0.5f,
+                                0.5f
+                        )
+                        // keep event markers below important locations
+                        .zIndex(
+                                1f
+                        );
+
+        Marker marker =
+                mMap.addMarker(
+                        options
+                );
+
+        if (marker != null) {
+
+            // tag prefix distinguishes event markers
+            marker.setTag(
+                    TAG_EVENT_PREFIX
+                            + eventId
+            );
+
+            drawnMarkers.put(
+                    eventId,
+                    marker
+            );
+        }
     }
 
     private void updateMarkerScales() {
-        // update event marker sizes
+
+        if (
+                mMap == null
+                        || getContext() == null
+        ) {
+            return;
+        }
+
+        float zoom =
+                mMap.getCameraPosition()
+                        .zoom;
+
+        int markerSize =
+                getMarkerSize(
+                        zoom
+                );
+
+        for (
+                Map.Entry<String, Marker> entry
+                : drawnMarkers.entrySet()
+        ) {
+
+            Marker marker =
+                    entry.getValue();
+
+            DocumentSnapshot doc =
+                    cachedEvents.get(
+                            entry.getKey()
+                    );
+
+            if (doc == null) {
+                continue;
+            }
+
+            // hide event markers when zoomed too far out
+            if (markerSize <= 0) {
+
+                marker.setVisible(
+                        false
+                );
+
+                continue;
+            }
+
+            marker.setVisible(
+                    true
+            );
+
+            String category =
+                    doc.getString(
+                            "category"
+                    );
+
+            Double averageSeverity =
+                    doc.getDouble(
+                            "averageSeverity"
+                    );
+
+            if (averageSeverity == null) {
+
+                averageSeverity =
+                        1.0;
+            }
+
+            int circleColor =
+                    getSeverityColor(
+                            averageSeverity
+                    );
+
+            int iconRes =
+                    getCategoryIcon(
+                            category
+                    );
+
+            marker.setIcon(
+                    createMarkerBitmap(
+                            circleColor,
+                            iconRes,
+                            markerSize
+                    )
+            );
+        }
+    }
+
+    private int getMarkerSize(
+            float zoom
+    ) {
+
+        if (
+                zoom < ZOOM_MIN
+        ) {
+
+            return 0;
+        }
+
+        if (
+                zoom >= ZOOM_MAX
+        ) {
+
+            return MARKER_MAX_SIZE;
+        }
+
+        float progress =
+                (
+                        zoom
+                                - ZOOM_MIN
+                )
+                        / (
+                        ZOOM_MAX
+                                - ZOOM_MIN
+                );
+
+        return (int) (
+                MARKER_MIN_SIZE
+                        + progress
+                        * (
+                        MARKER_MAX_SIZE
+                                - MARKER_MIN_SIZE
+                )
+        );
+    }
+
+    private BitmapDescriptor createMarkerBitmap(
+            int circleColor,
+            int iconRes,
+            int size
+    ) {
+
+        int iconSize =
+                (int) (
+                        size * 0.47f
+                );
+
+        Bitmap bitmap =
+                Bitmap.createBitmap(
+                        size,
+                        size,
+                        Bitmap.Config.ARGB_8888
+                );
+
+        Canvas canvas =
+                new Canvas(
+                        bitmap
+                );
+
+
+        // circular severity background
+        Paint circlePaint =
+                new Paint(
+                        Paint.ANTI_ALIAS_FLAG
+                );
+
+        circlePaint.setColor(
+                circleColor
+        );
+
+        circlePaint.setStyle(
+                Paint.Style.FILL
+        );
+
+        canvas.drawCircle(
+                size / 2f,
+                size / 2f,
+                size / 2f,
+                circlePaint
+        );
+
+
+        // white outline
+        Paint borderPaint =
+                new Paint(
+                        Paint.ANTI_ALIAS_FLAG
+                );
+
+        borderPaint.setColor(
+                Color.WHITE
+        );
+
+        borderPaint.setStyle(
+                Paint.Style.STROKE
+        );
+
+        borderPaint.setStrokeWidth(
+                size * 0.05f
+        );
+
+        canvas.drawCircle(
+                size / 2f,
+                size / 2f,
+                (
+                        size / 2f
+                ) - 3,
+                borderPaint
+        );
+
+
+        // event category icon
+        Drawable icon =
+                ContextCompat.getDrawable(
+                        requireContext(),
+                        iconRes
+                );
+
+        if (icon != null) {
+
+            icon.mutate();
+
+            icon.setColorFilter(
+                    Color.WHITE,
+                    PorterDuff.Mode.SRC_IN
+            );
+
+            int left =
+                    (
+                            size
+                                    - iconSize
+                    ) / 2;
+
+            int top =
+                    (
+                            size
+                                    - iconSize
+                    ) / 2;
+
+            icon.setBounds(
+                    left,
+                    top,
+                    left + iconSize,
+                    top + iconSize
+            );
+
+            icon.draw(
+                    canvas
+            );
+        }
+
+        return BitmapDescriptorFactory
+                .fromBitmap(
+                        bitmap
+                );
+    }
+
+    private int getSeverityColor(
+            double severity
+    ) {
+
+        if (
+                severity <= 3
+        ) {
+
+            return Color.parseColor(
+                    "#4CAF50"
+            );
+        }
+
+        if (
+                severity <= 6
+        ) {
+
+            return Color.parseColor(
+                    "#FFC107"
+            );
+        }
+
+        if (
+                severity <= 9
+        ) {
+
+            return Color.parseColor(
+                    "#FF5722"
+            );
+        }
+
+        return Color.parseColor(
+                "#F44336"
+        );
+    }
+
+    private int getCategoryIcon(
+            String category
+    ) {
+
+        if (category == null) {
+
+            return R.drawable.ic_report;
+        }
+
+        switch (category) {
+
+            case "ROAD":
+
+                return R.drawable.ic_road;
+
+            case "LIGHTING":
+
+                return R.drawable.ic_lighting;
+
+            case "HAZARDS":
+
+                return R.drawable.ic_hazards;
+
+            case "VANDALISM":
+
+                return R.drawable.ic_vandalism;
+
+            case "SAFETY":
+
+                return R.drawable.ic_shield;
+
+            default:
+
+                return R.drawable.ic_report;
+        }
+    }
+
+    private void applyMapStyle() {
+
+        int nightMode =
+                getResources()
+                        .getConfiguration()
+                        .uiMode
+                        & android.content.res
+                        .Configuration
+                        .UI_MODE_NIGHT_MASK;
+
+        if (
+                nightMode
+                        == android.content.res
+                        .Configuration
+                        .UI_MODE_NIGHT_YES
+        ) {
+
+            mMap.setMapStyle(
+                    MapStyleOptions
+                            .loadRawResourceStyle(
+                                    requireContext(),
+                                    R.raw.map_style_dark
+                            )
+            );
+        }
     }
 }
