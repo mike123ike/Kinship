@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!-- light -->
 <resources>
+
     <color name="primary">#FF2D5A27</color>
     <color name="secondary">#FFE8F0E6</color>
     <color name="tertiary">#FF1F2937</color>
+
     <color name="background">#F5F5F5</color>
     <color name="textSecondary">#9CA3AF</color>
     <color name="cardBackground">#FFFFFF</color>
+
     <color name="heart">#D93025</color>
     <color name="popupCardBackground">#F1F3F4</color>
 
@@ -25,6 +29,7 @@
     <color name="fixedStatusBg">#E8F2E4</color>
     <color name="fixedStatusText">#2D5A27</color>
     <color name="fixedStatusStroke">#D7E6D2</color>
+
     <color name="buttonTextOnPrimary">#FFFFFF</color>
 
     <color name="reportPendingBg">#FFF4D6</color>
@@ -38,4 +43,8 @@
     <color name="reportInProgressBg">#E5F0F8</color>
     <color name="reportInProgressText">#2F6FA3</color>
     <color name="reportInProgressStroke">#9FC5E3</color>
+
+    <color name="newsLocationIconBg">#E7EFF8</color>
+    <color name="newsLocationIconTint">#35638F</color>
+
 </resources>
