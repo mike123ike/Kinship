@@ -35,6 +35,7 @@ android {
 
         buildConfigField("String", "CLOUD_NAME", "\"${localProperties.getProperty("CLOUD_NAME") ?: ""}\"")
         buildConfigField("String", "UPLOAD_PRESET", "\"${localProperties.getProperty("UPLOAD_PRESET") ?: ""}\"")
+        buildConfigField("String", "NEWSDATA_API_KEY", "\"${localProperties.getProperty("NEWSDATA_API_KEY") ?: ""}\"")
     }
 
     buildTypes {
@@ -73,7 +74,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
-    // Firebase & Maps Dependencies
+    // firebase + map dependencies
     implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.android.material:material:1.12.0")
