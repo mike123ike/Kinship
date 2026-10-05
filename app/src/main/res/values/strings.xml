@@ -1,3 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <resources>
-    <string name="app_name">CivicFix</string>
+
+    <string name="app_name">Kinship</string>
+
+    <string name="brand_logo_description">Kinship logo</string>
+
+    <string name="settings_activity_label">Kinship Settings</string>
+
+    <string name="about_section_title">ABOUT KINSHIP</string>
+
+    <string name="about_description">Kinship helps communities report local issues, confirm what others are seeing, and stay aware of events near places they care about.</string>
+
+    <string name="copyright_text">© 2026 Kinship</string>
+
+    <string name="anonymous_reporting_description">Hide your identity from other users when submitting reports. Kinship still associates the report with your account for integrity.</string>
+
+    <string name="important_locations_privacy_description">Your saved Home, Work, School, and custom locations are not shown publicly. Kinship uses them to find events near places you care about.</string>
+
+    <string name="nearby_empty_description">Active Kinship events within 3 miles of your saved locations will appear here.</string>
+
+    <string name="community_safety_body">Kinship is for reporting community issues, not emergencies.\n\n• If someone is in immediate danger, contact emergency services.\n\n• Keep reports and comments factual and related to the civic issue.\n\n• Do not post private personal information about other people.\n\n• Threats, harassment, or discriminatory content should not be posted.\n\n• When possible, keep photos focused on the issue rather than identifiable bystanders.</string>
+
 </resources>

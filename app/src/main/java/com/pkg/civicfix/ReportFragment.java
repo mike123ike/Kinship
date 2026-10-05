@@ -295,7 +295,7 @@ public class ReportFragment extends Fragment implements OnMapReadyCallback {
             updates.put("photoGallery", FieldValue.arrayUnion(imageUrl));
         }
 
-        if (newCount >= 2) {
+        if (newCount >= 3) {
             updates.put("status", "ACTIVE");
         }
 
