@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION"
-        tools:ignore="CoarseFineLocation" />
+        android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -20,15 +23,6 @@
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <uses-permission
-        android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION"
-        tools:ignore="CoarseFineLocation" />
-
-    <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <queries>
 
@@ -51,7 +45,6 @@
         android:theme="@style/Theme.CivicFix">
 
 
-        <!-- login -->
         <activity
             android:name=".LoginActivity"
             android:exported="true"
@@ -71,28 +64,40 @@
         </activity>
 
 
-        <!-- main app -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:label="CivicFix Home"
+            android:label="@string/app_name"
             android:theme="@style/Theme.CivicFix" />
 
 
-        <!-- settings -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:label="CivicFix Settings"
+            android:label="@string/settings_activity_label"
             android:theme="@style/Theme.CivicFix" />
 
 
-        <!-- important locations -->
+        <activity
+            android:name=".PrivacySafetyActivity"
+            android:exported="false"
+            android:label="Privacy &amp; Safety"
+            android:theme="@style/Theme.CivicFix" />
+
+
+        <activity
+            android:name=".LegalActivity"
+            android:exported="false"
+            android:label="Kinship"
+            android:theme="@style/Theme.CivicFix" />
+
+
         <activity
             android:name=".ImportantLocationsActivity"
             android:exported="false"
             android:label="Important Locations"
             android:theme="@style/Theme.CivicFix" />
+
 
         <activity
             android:name=".MyReportsActivity"
@@ -101,14 +106,12 @@
             android:theme="@style/Theme.CivicFix" />
 
 
-        <!-- location picker -->
         <activity
             android:name=".LocationPickerActivity"
             android:exported="false"
             android:theme="@style/Theme.CivicFix" />
 
 
-        <!-- file provider -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -122,7 +125,6 @@
         </provider>
 
 
-        <!-- google maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />

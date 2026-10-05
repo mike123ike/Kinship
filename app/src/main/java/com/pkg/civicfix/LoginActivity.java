@@ -1,5 +1,13 @@
 package com.pkg.civicfix;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.view.View;
+import android.widget.Button;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -8,11 +16,6 @@ import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
-
-import android.os.Bundle;
-import android.os.CancellationSignal;
-import android.view.View;
-import android.widget.Button;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
@@ -27,117 +30,196 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.pkg.civicfix.base.CivicFixActivity;
 import com.pkg.civicfix.model.User;
 
-public class LoginActivity extends CivicFixActivity {
+public class LoginActivity
+        extends CivicFixActivity {
+
+    private static final String SUPPORT_EMAIL =
+            "civicfixtestadmin01@gmail.com";
 
     private CredentialManager manager;
+
     private GetCredentialRequest request;
 
     private FirebaseAuth auth;
+
     private FirebaseFirestore db;
 
     private CancellationSignal cancel;
 
     private Button btnSignin;
 
+
     private class Callback
             implements CredentialManagerCallback<
             GetCredentialResponse,
-            GetCredentialException
-            > {
+            GetCredentialException> {
 
         @Override
-        public void onResult(GetCredentialResponse result) {
+        public void onResult(
+                GetCredentialResponse result
+        ) {
 
             try {
 
                 String token =
                         GoogleIdTokenCredential
                                 .createFrom(
-                                        result.getCredential().getData()
+                                        result.getCredential()
+                                                .getData()
                                 )
                                 .getIdToken();
 
-                linkToFirebase(token);
 
-            } catch (Exception e) {
+                linkToFirebase(
+                        token
+                );
 
-                showToast("Token Parsing Error");
+            } catch (
+                    Exception error
+            ) {
+
+                showToast(
+                        "Token Parsing Error"
+                );
+
                 resetUI();
             }
         }
 
+
         @Override
         public void onError(
-                @NonNull GetCredentialException e
+                @NonNull GetCredentialException error
         ) {
 
             resetUI();
 
             showToast(
                     "Sign-In Error: "
-                            + e.getLocalizedMessage()
+                            + error.getLocalizedMessage()
             );
         }
     }
+
 
     @Override
     protected void onCreate(
             @Nullable Bundle savedInstanceState
     ) {
-        super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.login_activity);
+        super.onCreate(
+                savedInstanceState
+        );
 
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        setContentView(
+                R.layout.login_activity
+        );
+
+        auth =
+                FirebaseAuth.getInstance();
+
+        db =
+                FirebaseFirestore.getInstance();
 
         btnSignin =
-                findViewById(R.id.btn_signin);
+                findViewById(
+                        R.id.btn_signin
+                );
 
-        /*
-         * If the user is already signed in, apply their
-         * saved theme and continue to MainActivity.
-         */
-        if (auth.getCurrentUser() != null) {
 
-            btnSignin.setEnabled(false);
+        // footer links
+        findViewById(
+                R.id.tvPrivacyPolicy
+        ).setOnClickListener(
+                v -> openLegalPage(
+                        LegalActivity.PAGE_PRIVACY
+                )
+        );
+
+
+        findViewById(
+                R.id.tvTerms
+        ).setOnClickListener(
+                v -> openLegalPage(
+                        LegalActivity.PAGE_TERMS
+                )
+        );
+
+
+        findViewById(
+                R.id.tvSupport
+        ).setOnClickListener(
+                v -> openSupportEmail()
+        );
+
+
+        // already signed in
+        if (
+                auth.getCurrentUser()
+                        != null
+        ) {
+
+            btnSignin.setEnabled(
+                    false
+            );
 
             applyDarkMode();
 
             return;
         }
 
+
+        // google sign in
         manager =
-                CredentialManager.create(this);
+                CredentialManager.create(
+                        this
+                );
+
 
         GetGoogleIdOption options =
-                new GetGoogleIdOption.Builder()
+                new GetGoogleIdOption
+                        .Builder()
                         .setServerClientId(
                                 "389842618012-hhsqficg7ubd1psh60t9vmvj2nq2o3g3.apps.googleusercontent.com"
                         )
-                        .setFilterByAuthorizedAccounts(false)
+                        .setFilterByAuthorizedAccounts(
+                                false
+                        )
                         .build();
 
+
         request =
-                new GetCredentialRequest.Builder()
-                        .addCredentialOption(options)
+                new GetCredentialRequest
+                        .Builder()
+                        .addCredentialOption(
+                                options
+                        )
                         .build();
+
 
         btnSignin.setOnClickListener(
                 this::executeSignin
         );
     }
 
-    private void executeSignin(View v) {
 
-        if (cancel != null) {
+    private void executeSignin(
+            View view
+    ) {
+
+        if (
+                cancel != null
+        ) {
+
             cancel.cancel();
         }
 
         cancel =
                 new CancellationSignal();
 
-        btnSignin.setEnabled(false);
+        btnSignin.setEnabled(
+                false
+        );
 
         manager.getCredentialAsync(
                 this,
@@ -148,117 +230,139 @@ public class LoginActivity extends CivicFixActivity {
         );
     }
 
+
     private void linkToFirebase(
             String token
     ) {
 
         AuthCredential credential =
-                GoogleAuthProvider.getCredential(
-                        token,
-                        null
-                );
+                GoogleAuthProvider
+                        .getCredential(
+                                token,
+                                null
+                        );
 
-        auth.signInWithCredential(credential)
+        auth.signInWithCredential(
+                        credential
+                )
                 .addOnCompleteListener(
                         this,
                         this::onSigninComplete
                 );
     }
 
+
     private void resetUI() {
 
-        btnSignin.setEnabled(true);
+        btnSignin.setEnabled(
+                true
+        );
     }
+
 
     private void onSigninComplete(
             Task<AuthResult> task
     ) {
 
-        if (!task.isSuccessful()) {
+        if (
+                task.isSuccessful()
+        ) {
+
+            AuthResult result =
+                    task.getResult();
+
+            FirebaseUser user =
+                    result.getUser();
+
+            if (
+                    user == null
+            ) {
+
+                resetUI();
+
+                showToast(
+                        "Authentication Failed"
+                );
+
+                return;
+            }
+
+
+            if (
+                    result.getAdditionalUserInfo()
+                            != null
+
+                            && result
+                            .getAdditionalUserInfo()
+                            .isNewUser()
+            ) {
+
+                User profile =
+                        new User(
+                                user.getUid(),
+                                user.getDisplayName(),
+                                user.getEmail()
+                        );
+
+
+                db.collection("users")
+                        .document(
+                                user.getUid()
+                        )
+                        .set(
+                                profile
+                        )
+                        .addOnSuccessListener(
+                                this,
+
+                                ignored -> {
+
+                                    showToast(
+                                            "Account Created Successfully"
+                                    );
+
+                                    goToMainScreen();
+                                }
+                        )
+                        .addOnFailureListener(
+                                this,
+
+                                error -> {
+
+                                    resetUI();
+
+                                    showToast(
+                                            "Account Creation Failure: "
+                                                    + error.getLocalizedMessage()
+                                    );
+                                }
+                        );
+
+            } else {
+
+                applyDarkMode();
+            }
+
+        } else {
 
             resetUI();
 
-            Exception e =
+
+            Exception error =
                     task.getException();
+
 
             showToast(
                     "Authentication Failed: "
                             + (
-                            e != null
-                                    ? e.getLocalizedMessage()
+                            error != null
+                                    ? error.getLocalizedMessage()
                                     : "Unknown Error"
                     )
             );
-
-            return;
-        }
-
-        AuthResult result =
-                task.getResult();
-
-        FirebaseUser user =
-                result.getUser();
-
-        if (user == null) {
-
-            resetUI();
-
-            showToast(
-                    "Authentication Failed: No user returned"
-            );
-
-            return;
-        }
-
-        if (result.getAdditionalUserInfo() != null
-                && result.getAdditionalUserInfo().isNewUser()) {
-
-            createNewUserProfile(user);
-
-        } else {
-
-            applyDarkMode();
         }
     }
 
-    private void createNewUserProfile(
-            FirebaseUser firebaseUser
-    ) {
-
-        User profile =
-                new User(
-                        firebaseUser.getUid(),
-                        firebaseUser.getDisplayName(),
-                        firebaseUser.getEmail()
-                );
-
-        db.collection("users")
-                .document(firebaseUser.getUid())
-                .set(profile)
-                .addOnSuccessListener(
-                        this,
-                        v -> {
-
-                            showToast(
-                                    "Account Created Successfully"
-                            );
-
-                            goToMainScreen();
-                        }
-                )
-                .addOnFailureListener(
-                        this,
-                        e -> {
-
-                            resetUI();
-
-                            showToast(
-                                    "Account Creation Failure: "
-                                            + e.getLocalizedMessage()
-                            );
-                        }
-                );
-    }
 
     private void goToMainScreen() {
 
@@ -268,103 +372,162 @@ public class LoginActivity extends CivicFixActivity {
         );
     }
 
-    /*
-     * Only read the field that this method actually needs.
-     *
-     * Previously this converted the entire Firestore document
-     * to User.class. That meant an unrelated malformed field
-     * such as savedLocations could crash the app before login
-     * finished.
-     */
+
     private void applyDarkMode() {
 
         String uid =
                 auth.getUid();
 
-        if (uid == null) {
 
-            showToast("Welcome Back");
+        if (
+                uid == null
+        ) {
+
+            showToast(
+                    "Welcome Back"
+            );
 
             goToMainScreen();
 
             return;
         }
 
+
         db.collection("users")
                 .document(uid)
                 .get()
                 .addOnSuccessListener(
                         this,
+
                         (DocumentSnapshot snapshot) -> {
 
-                            if (snapshot.exists()) {
+                            if (
+                                    snapshot.exists()
+                            ) {
 
-                                Boolean darkMode =
-                                        snapshot.getBoolean(
-                                                "darkMode"
+                                User profile =
+                                        snapshot.toObject(
+                                                User.class
                                         );
 
+
                                 if (
-                                        Boolean.TRUE.equals(darkMode)
+                                        profile != null
+                                                && profile.isDarkMode()
                                                 && AppCompatDelegate
                                                 .getDefaultNightMode()
-                                                != AppCompatDelegate
-                                                .MODE_NIGHT_YES
+                                                != AppCompatDelegate.MODE_NIGHT_YES
                                 ) {
 
                                     AppCompatDelegate
                                             .setDefaultNightMode(
-                                                    AppCompatDelegate
-                                                            .MODE_NIGHT_YES
-                                            );
-                                }
-
-                                /*
-                                 * If the user prefers light mode
-                                 * but the app is currently forced
-                                 * into dark mode, restore light.
-                                 */
-                                if (
-                                        Boolean.FALSE.equals(darkMode)
-                                                && AppCompatDelegate
-                                                .getDefaultNightMode()
-                                                == AppCompatDelegate
-                                                .MODE_NIGHT_YES
-                                ) {
-
-                                    AppCompatDelegate
-                                            .setDefaultNightMode(
-                                                    AppCompatDelegate
-                                                            .MODE_NIGHT_NO
+                                                    AppCompatDelegate.MODE_NIGHT_YES
                                             );
                                 }
                             }
 
-                            showToast("Welcome Back");
+
+                            showToast(
+                                    "Welcome Back"
+                            );
 
                             goToMainScreen();
                         }
                 )
                 .addOnFailureListener(
                         this,
-                        e -> {
 
-                            /*
-                             * Theme loading should never prevent
-                             * the user from entering the app.
-                             */
-                            showToast("Welcome Back");
+                        error -> {
+
+                            showToast(
+                                    "Welcome Back"
+                            );
 
                             goToMainScreen();
                         }
                 );
     }
 
+
+    private void openLegalPage(
+            String page
+    ) {
+
+        Intent intent =
+                new Intent(
+                        this,
+                        LegalActivity.class
+                );
+
+        intent.putExtra(
+                LegalActivity.EXTRA_PAGE,
+                page
+        );
+
+        startActivity(
+                intent
+        );
+    }
+
+
+    private void openSupportEmail() {
+
+        String subject =
+                "Kinship Support";
+
+        String body =
+                "Please describe what you need help with:\n\n";
+
+
+        Uri uri =
+                Uri.parse(
+                        "mailto:"
+                                + SUPPORT_EMAIL
+                                + "?subject="
+                                + Uri.encode(
+                                subject
+                        )
+                                + "&body="
+                                + Uri.encode(
+                                body
+                        )
+                );
+
+
+        Intent intent =
+                new Intent(
+                        Intent.ACTION_SENDTO,
+                        uri
+                );
+
+
+        try {
+
+            startActivity(
+                    intent
+            );
+
+        } catch (
+                ActivityNotFoundException error
+        ) {
+
+            showToast(
+                    "No email app is available"
+            );
+        }
+    }
+
+
     @Override
     protected void onDestroy() {
+
         super.onDestroy();
 
-        if (cancel != null) {
+
+        if (
+                cancel != null
+        ) {
+
             cancel.cancel();
         }
     }
