@@ -8,6 +8,7 @@
     android:background="@color/background"
     android:orientation="vertical">
 
+
     <LinearLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
@@ -41,8 +42,8 @@
             android:layout_height="24dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
-            android:focusable="true"
             android:contentDescription="Settings"
+            android:focusable="true"
             android:src="@drawable/ic_settings"
             app:tint="@color/tertiary" />
 

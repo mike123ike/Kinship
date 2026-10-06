@@ -74,7 +74,6 @@ public class EventsFragment extends Fragment {
     private static final int TAB_LOCAL_NEWS =
             1;
 
-    // 3 miles.
     private static final double NEARBY_RADIUS_METERS =
             4828.032;
 
@@ -100,14 +99,9 @@ public class EventsFragment extends Fragment {
             "Most Reports";
 
     private FirebaseAuth auth;
-
     private FirebaseFirestore db;
-
-    private FusedLocationProviderClient
-            fusedLocationClient;
-
-    private LocalNewsRepository
-            localNewsRepository;
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocalNewsRepository localNewsRepository;
 
     private final ExecutorService geocoderExecutor =
             Executors.newSingleThreadExecutor();
@@ -118,37 +112,26 @@ public class EventsFragment extends Fragment {
             );
 
     private View nearbyContent;
-
     private View localNewsContent;
 
     private MaterialButton btnTabNearby;
-
     private MaterialButton btnTabLocalNews;
-
     private MaterialButton btnLocationFilter;
-
     private MaterialButton btnSort;
 
     private LinearLayout nearbyEventsContainer;
-
     private View nearbyEmptyLayout;
-
     private TextView tvNearbyEventCount;
 
     private LinearLayout localNewsContainer;
-
     private View localNewsEmptyLayout;
-
     private TextView tvLocalNewsLocation;
-
     private TextView tvLocalNewsCount;
 
-    private final List<ImportantLocation>
-            importantLocations =
+    private final List<ImportantLocation> importantLocations =
             new ArrayList<>();
 
-    private final Map<String, NearbyEventItem>
-            nearbyEventsById =
+    private final Map<String, NearbyEventItem> nearbyEventsById =
             new HashMap<>();
 
     @Nullable
@@ -170,12 +153,11 @@ public class EventsFragment extends Fragment {
             TAB_NEARBY;
 
 
-    // location permission
-
     private final ActivityResultLauncher<String[]>
             localNewsLocationPermissionLauncher =
 
             registerForActivityResult(
+
                     new ActivityResultContracts
                             .RequestMultiplePermissions(),
 
@@ -189,7 +171,9 @@ public class EventsFragment extends Fragment {
                                         )
                                 );
 
-                        if (fineGranted) {
+                        if (
+                                fineGranted
+                        ) {
 
                             loadLocalNews();
 
@@ -202,8 +186,6 @@ public class EventsFragment extends Fragment {
                     }
             );
 
-
-    // fragment
 
     @Nullable
     @Override
@@ -370,8 +352,6 @@ public class EventsFragment extends Fragment {
     }
 
 
-    // tabs
-
     private void selectTab(
             int tab
     ) {
@@ -486,14 +466,14 @@ public class EventsFragment extends Fragment {
     }
 
 
-    // important locations
-
     private void loadImportantLocationsAndNearbyEvents() {
 
         FirebaseUser user =
                 auth.getCurrentUser();
 
-        if (user == null) {
+        if (
+                user == null
+        ) {
 
             showNearbyEmptyState();
 
@@ -534,7 +514,10 @@ public class EventsFragment extends Fragment {
                 .addOnSuccessListener(
                         snapshot -> {
 
-                            if (!isAdded()) {
+                            if (
+                                    !isAdded()
+                            ) {
+
                                 return;
                             }
 
@@ -553,7 +536,6 @@ public class EventsFragment extends Fragment {
 
                             if (
                                     selectedLocationId != null
-
                                             && findImportantLocationById(
                                             selectedLocationId
                                     ) == null
@@ -612,7 +594,10 @@ public class EventsFragment extends Fragment {
                 .addOnFailureListener(
                         error -> {
 
-                            if (!isAdded()) {
+                            if (
+                                    !isAdded()
+                            ) {
+
                                 return;
                             }
 
@@ -633,8 +618,6 @@ public class EventsFragment extends Fragment {
                 );
     }
 
-
-    // nearby events
 
     private void loadNearbyEvents() {
 
@@ -657,8 +640,7 @@ public class EventsFragment extends Fragment {
                         "Loading..."
                 );
 
-        List<Task<QuerySnapshot>>
-                queryTasks =
+        List<Task<QuerySnapshot>> queryTasks =
                 new ArrayList<>();
 
         Set<String> queryKeys =
@@ -676,11 +658,8 @@ public class EventsFragment extends Fragment {
 
             GeoLocation center =
                     new GeoLocation(
-                            location
-                                    .getLatitude(),
-
-                            location
-                                    .getLongitude()
+                            location.getLatitude(),
+                            location.getLongitude()
                     );
 
             List<GeoQueryBounds> bounds =
@@ -757,7 +736,6 @@ public class EventsFragment extends Fragment {
 
                     if (
                             !isAdded()
-
                                     || generation
                                     != nearbyLoadGeneration
                     ) {
@@ -778,14 +756,12 @@ public class EventsFragment extends Fragment {
 
                         if (
                                 !task.isSuccessful()
-
                                         || task.getResult()
                                         == null
                         ) {
 
                             if (
                                     firstFailure == null
-
                                             && task.getException()
                                             != null
                             ) {
@@ -818,7 +794,8 @@ public class EventsFragment extends Fragment {
                     ) {
 
                         if (
-                                firstFailure != null
+                                firstFailure
+                                        != null
                         ) {
 
                             Log.e(
@@ -887,7 +864,6 @@ public class EventsFragment extends Fragment {
             return;
         }
 
-        // geofire returns rectangular geohash bounds; exact distance check guarantees event is within 3 miles.
         DistanceMatch nearest =
                 findNearestLocation(
                         latitude,
@@ -897,7 +873,6 @@ public class EventsFragment extends Fragment {
 
         if (
                 nearest == null
-
                         || nearest.distanceMeters
                         > NEARBY_RADIUS_METERS
         ) {
@@ -932,13 +907,10 @@ public class EventsFragment extends Fragment {
 
         NearbyEventItem item =
                 new NearbyEventItem(
-
                         document.getId(),
-
                         document.getString(
                                 "category"
                         ),
-
                         status,
 
                         averageSeverity == null
@@ -947,16 +919,13 @@ public class EventsFragment extends Fragment {
 
                         uniqueUserCount == null
                                 ? 0
-                                : uniqueUserCount
-                                  .intValue(),
+                                : uniqueUserCount.intValue(),
 
                         commentCount == null
                                 ? 0
-                                : commentCount
-                                  .intValue(),
+                                : commentCount.intValue(),
 
                         latitude,
-
                         longitude,
 
                         document.getTimestamp(
@@ -977,19 +946,19 @@ public class EventsFragment extends Fragment {
 
     private void renderNearbyEvents() {
 
-        if (!isAdded()) {
+        if (
+                !isAdded()
+        ) {
+
             return;
         }
 
-        List<NearbyEventItem>
-                visibleItems =
+        List<NearbyEventItem> visibleItems =
                 new ArrayList<>();
 
         ImportantLocation selectedLocation =
                 selectedLocationId == null
-
                         ? null
-
                         : findImportantLocationById(
                         selectedLocationId
                 );
@@ -1002,8 +971,7 @@ public class EventsFragment extends Fragment {
             DistanceMatch match;
 
             if (
-                    selectedLocation
-                            != null
+                    selectedLocation != null
             ) {
 
                 double distance =
@@ -1038,7 +1006,6 @@ public class EventsFragment extends Fragment {
 
                 if (
                         match == null
-
                                 || match.distanceMeters
                                 > NEARBY_RADIUS_METERS
                 ) {
@@ -1119,7 +1086,6 @@ public class EventsFragment extends Fragment {
 
                 break;
 
-
             case SORT_CLOSEST:
 
                 comparison =
@@ -1129,7 +1095,6 @@ public class EventsFragment extends Fragment {
                         );
 
                 break;
-
 
             case SORT_REPORTS:
 
@@ -1141,7 +1106,6 @@ public class EventsFragment extends Fragment {
 
                 break;
 
-
             case SORT_RECENT:
             default:
 
@@ -1150,7 +1114,6 @@ public class EventsFragment extends Fragment {
                                 getActivityTimeMillis(
                                         b
                                 ),
-
                                 getActivityTimeMillis(
                                         a
                                 )
@@ -1170,7 +1133,6 @@ public class EventsFragment extends Fragment {
                 getActivityTimeMillis(
                         b
                 ),
-
                 getActivityTimeMillis(
                         a
                 )
@@ -1254,16 +1216,12 @@ public class EventsFragment extends Fragment {
 
         Timestamp activityTime =
                 item.updatedAt != null
-
                         ? item.updatedAt
-
                         : item.createdAt;
 
         timeView.setText(
                 activityTime == null
-
                         ? "Updated recently"
-
                         : "Updated "
                           + ReportDisplayUtils
                             .formatRelativeTime(
@@ -1313,7 +1271,6 @@ public class EventsFragment extends Fragment {
         statusCard.setCardBackgroundColor(
                 ContextCompat.getColor(
                         requireContext(),
-
                         ReportStatusUi
                                 .getBackgroundColorRes(
                                         item.status
@@ -1324,7 +1281,6 @@ public class EventsFragment extends Fragment {
         statusCard.setStrokeColor(
                 ContextCompat.getColor(
                         requireContext(),
-
                         ReportStatusUi
                                 .getStrokeColorRes(
                                         item.status
@@ -1335,7 +1291,6 @@ public class EventsFragment extends Fragment {
         statusView.setTextColor(
                 ContextCompat.getColor(
                         requireContext(),
-
                         ReportStatusUi
                                 .getTextColorRes(
                                         item.status
@@ -1366,8 +1321,6 @@ public class EventsFragment extends Fragment {
     }
 
 
-    // location filter
-
     private void showLocationMenu() {
 
         if (
@@ -1397,8 +1350,7 @@ public class EventsFragment extends Fragment {
                 "All Locations"
         );
 
-        Map<Integer, String>
-                locationIdByMenuItem =
+        Map<Integer, String> locationIdByMenuItem =
                 new HashMap<>();
 
         for (
@@ -1464,8 +1416,7 @@ public class EventsFragment extends Fragment {
     private void updateLocationFilterButtonText() {
 
         if (
-                selectedLocationId
-                        == null
+                selectedLocationId == null
         ) {
 
             btnLocationFilter.setText(
@@ -1533,8 +1484,6 @@ public class EventsFragment extends Fragment {
     }
 
 
-    // sort
-
     private void showSortMenu() {
 
         PopupMenu popupMenu =
@@ -1566,8 +1515,7 @@ public class EventsFragment extends Fragment {
                 item -> {
 
                     selectedSort =
-                            item
-                                    .getTitle()
+                            item.getTitle()
                                     .toString();
 
                     btnSort.setText(
@@ -1583,8 +1531,6 @@ public class EventsFragment extends Fragment {
         popupMenu.show();
     }
 
-
-    // location helpers
 
     @Nullable
     private DistanceMatch findNearestLocation(
@@ -1625,8 +1571,7 @@ public class EventsFragment extends Fragment {
         }
 
         if (
-                nearestLocation
-                        == null
+                nearestLocation == null
         ) {
 
             return null;
@@ -1670,19 +1615,16 @@ public class EventsFragment extends Fragment {
 
                     int rankComparison =
                             Integer.compare(
-
                                     getLocationTypeRank(
                                             a.getType()
                                     ),
-
                                     getLocationTypeRank(
                                             b.getType()
                                     )
                             );
 
                     if (
-                            rankComparison
-                                    != 0
+                            rankComparison != 0
                     ) {
 
                         return rankComparison;
@@ -1717,8 +1659,7 @@ public class EventsFragment extends Fragment {
                                     );
 
                             if (
-                                    timestampComparison
-                                            != 0
+                                    timestampComparison != 0
                             ) {
 
                                 return timestampComparison;
@@ -1818,7 +1759,6 @@ public class EventsFragment extends Fragment {
 
         if (
                 customName == null
-
                         || customName
                         .trim()
                         .isEmpty()
@@ -1831,15 +1771,11 @@ public class EventsFragment extends Fragment {
     }
 
 
-    // nearby formatters
-
     private void showNearbyEmptyState() {
 
         if (
                 nearbyEventsContainer == null
-
                         || nearbyEmptyLayout == null
-
                         || tvNearbyEventCount == null
         ) {
 
@@ -1867,9 +1803,7 @@ public class EventsFragment extends Fragment {
 
         Timestamp timestamp =
                 item.updatedAt != null
-
                         ? item.updatedAt
-
                         : item.createdAt;
 
         if (
@@ -1896,9 +1830,7 @@ public class EventsFragment extends Fragment {
 
         String distanceText =
                 miles < 0.1
-
                         ? "<0.1 mi"
-
                         : String.format(
                         Locale.getDefault(),
                         "%.1f mi",
@@ -1907,7 +1839,6 @@ public class EventsFragment extends Fragment {
 
         if (
                 locationName == null
-
                         || locationName
                         .trim()
                         .isEmpty()
@@ -1931,9 +1862,7 @@ public class EventsFragment extends Fragment {
                 reporterCount
                         + (
                         reporterCount == 1
-
                                 ? " reporter"
-
                                 : " reporters"
                 );
 
@@ -1941,9 +1870,7 @@ public class EventsFragment extends Fragment {
                 commentCount
                         + (
                         commentCount == 1
-
                                 ? " comment"
-
                                 : " comments"
                 );
 
@@ -1964,8 +1891,10 @@ public class EventsFragment extends Fragment {
 
         if (
                 Math.abs(
-                        severity - rounded
-                ) < 0.05
+                        severity
+                                - rounded
+                )
+                        < 0.05
         ) {
 
             return String.valueOf(
@@ -2016,7 +1945,6 @@ public class EventsFragment extends Fragment {
 
         if (
                 category == null
-
                         || category
                         .trim()
                         .isEmpty()
@@ -2074,33 +2002,25 @@ public class EventsFragment extends Fragment {
         ) {
 
             case "ROAD":
-
                 return "Community-reported road issue near a saved location.";
 
             case "LIGHTING":
-
                 return "Community-reported lighting issue near a saved location.";
 
             case "HAZARDS":
-
                 return "Community-reported hazard near a saved location.";
 
             case "VANDALISM":
-
                 return "Community-reported vandalism near a saved location.";
 
             case "SAFETY":
-
                 return "Community-reported safety concern near a saved location.";
 
             default:
-
                 return "Community-reported issue near one of your saved places.";
         }
     }
 
-
-    // local news
 
     private void loadLocalNewsIfNeeded() {
 
@@ -2119,15 +2039,14 @@ public class EventsFragment extends Fragment {
     private void loadLocalNews() {
 
         if (
-                BuildConfig.NEWSDATA_API_KEY == null
-
-                        || BuildConfig.NEWSDATA_API_KEY
+                BuildConfig.WORLD_NEWS_API_KEY == null
+                        || BuildConfig.WORLD_NEWS_API_KEY
                         .trim()
                         .isEmpty()
         ) {
 
             showLocalNewsError(
-                    "NewsData API key is missing."
+                    "World News API key is missing."
             );
 
             return;
@@ -2180,7 +2099,6 @@ public class EventsFragment extends Fragment {
 
             fusedLocationClient
                     .getCurrentLocation(
-
                             Priority
                                     .PRIORITY_HIGH_ACCURACY,
 
@@ -2190,7 +2108,10 @@ public class EventsFragment extends Fragment {
                     .addOnSuccessListener(
                             location -> {
 
-                                if (!isAdded()) {
+                                if (
+                                        !isAdded()
+                                ) {
+
                                     return;
                                 }
 
@@ -2213,7 +2134,10 @@ public class EventsFragment extends Fragment {
                     .addOnFailureListener(
                             error -> {
 
-                                if (!isAdded()) {
+                                if (
+                                        !isAdded()
+                                ) {
+
                                     return;
                                 }
 
@@ -2236,9 +2160,7 @@ public class EventsFragment extends Fragment {
 
         return ContextCompat
                 .checkSelfPermission(
-
                         requireContext(),
-
                         Manifest.permission
                                 .ACCESS_FINE_LOCATION
                 )
@@ -2260,7 +2182,6 @@ public class EventsFragment extends Fragment {
 
         if (
                 location.hasAccuracy()
-
                         && location
                         .getAccuracy()
                         > MAX_NEWS_LOCATION_ACCURACY_METERS
@@ -2282,7 +2203,10 @@ public class EventsFragment extends Fragment {
                     .addOnSuccessListener(
                             location -> {
 
-                                if (!isAdded()) {
+                                if (
+                                        !isAdded()
+                                ) {
+
                                     return;
                                 }
 
@@ -2307,7 +2231,10 @@ public class EventsFragment extends Fragment {
                     .addOnFailureListener(
                             error -> {
 
-                                if (!isAdded()) {
+                                if (
+                                        !isAdded()
+                                ) {
+
                                     return;
                                 }
 
@@ -2354,13 +2281,10 @@ public class EventsFragment extends Fragment {
                         .getTime();
 
         return age >= 0
-
                 && age
                 <= MAX_LAST_LOCATION_AGE_MS;
     }
 
-
-    // current location -> city
 
     private void resolveNewsArea(
             @NonNull Location location
@@ -2391,12 +2315,8 @@ public class EventsFragment extends Fragment {
                                 geocoder
                                         .getFromLocation(
 
-                                                location
-                                                        .getLatitude(),
-
-                                                location
-                                                        .getLongitude(),
-
+                                                location.getLatitude(),
+                                                location.getLongitude(),
                                                 5
                                         );
 
@@ -2411,8 +2331,7 @@ public class EventsFragment extends Fragment {
 
                             city =
                                     cleanLocationPart(
-                                            address
-                                                    .getLocality()
+                                            address.getLocality()
                                     );
 
                             if (
@@ -2421,15 +2340,13 @@ public class EventsFragment extends Fragment {
 
                                 city =
                                         cleanLocationPart(
-                                                address
-                                                        .getSubLocality()
+                                                address.getSubLocality()
                                         );
                             }
 
                             state =
                                     cleanLocationPart(
-                                            address
-                                                    .getAdminArea()
+                                            address.getAdminArea()
                                     );
                         }
 
@@ -2453,13 +2370,15 @@ public class EventsFragment extends Fragment {
                     mainHandler.post(
                             () -> {
 
-                                if (!isAdded()) {
+                                if (
+                                        !isAdded()
+                                ) {
+
                                     return;
                                 }
 
                                 if (
                                         finalCity == null
-
                                                 || finalCity
                                                 .trim()
                                                 .isEmpty()
@@ -2472,17 +2391,18 @@ public class EventsFragment extends Fragment {
                                     return;
                                 }
 
+                                // the ui still shows the user's actual reverse-geocoded city
                                 String displayLocation =
                                         finalState == null
-
                                                 ? finalCity
-
                                                 : finalCity
                                                   + ", "
                                                   + finalState;
 
+                                // newsdata gets the gps coordinates. localnewsrepository uses them to select the closest major city.
                                 fetchNewsForArea(
-                                        finalCity,
+                                        location.getLatitude(),
+                                        location.getLongitude(),
                                         displayLocation
                                 );
                             }
@@ -2499,7 +2419,6 @@ public class EventsFragment extends Fragment {
 
         if (
                 addresses == null
-
                         || addresses
                         .isEmpty()
         ) {
@@ -2520,7 +2439,6 @@ public class EventsFragment extends Fragment {
 
                 return address;
             }
-
         }
 
         for (
@@ -2559,19 +2477,15 @@ public class EventsFragment extends Fragment {
         String cleaned =
                 value.trim();
 
-        return cleaned
-                .isEmpty()
-
+        return cleaned.isEmpty()
                 ? null
-
                 : cleaned;
     }
 
 
-    // newsdata
-
     private void fetchNewsForArea(
-            @NonNull String city,
+            double latitude,
+            double longitude,
             @NonNull String displayLocation
     ) {
 
@@ -2583,7 +2497,8 @@ public class EventsFragment extends Fragment {
         localNewsRepository
                 .fetchLocalNews(
 
-                        city,
+                        latitude,
+                        longitude,
 
                         new LocalNewsRepository.Callback() {
 
@@ -2594,7 +2509,10 @@ public class EventsFragment extends Fragment {
                                             articles
                             ) {
 
-                                if (!isAdded()) {
+                                if (
+                                        !isAdded()
+                                ) {
+
                                     return;
                                 }
 
@@ -2615,7 +2533,10 @@ public class EventsFragment extends Fragment {
                                     @NonNull String message
                             ) {
 
-                                if (!isAdded()) {
+                                if (
+                                        !isAdded()
+                                ) {
+
                                     return;
                                 }
 
@@ -2641,24 +2562,18 @@ public class EventsFragment extends Fragment {
 
         tvLocalNewsCount
                 .setText(
-
                         count
                                 + (
                                 count == 1
-
                                         ? " story"
-
                                         : " stories"
                         )
                 );
 
         localNewsEmptyLayout
                 .setVisibility(
-
                         count == 0
-
                                 ? View.VISIBLE
-
                                 : View.GONE
                 );
 
@@ -2672,6 +2587,7 @@ public class EventsFragment extends Fragment {
             );
         }
     }
+
 
 
     private void addLocalNewsCard(
@@ -2737,15 +2653,11 @@ public class EventsFragment extends Fragment {
                 article.getDescription();
 
         summary.setText(
-
                 description == null
-
                         || description
                         .trim()
                         .isEmpty()
-
                         ? "Tap to read the full story."
-
                         : description.trim()
         );
 
@@ -2808,20 +2720,17 @@ public class EventsFragment extends Fragment {
     ) {
 
         String content =
-                (
-                        safeLower(
-                                article.getTitle()
-                        )
-                                + " "
-                                + safeLower(
-                                article.getDescription()
-                        )
+                safeLower(
+                        article.getTitle()
+                )
+                        + " "
+                        + safeLower(
+                        article.getDescription()
                 );
 
         if (
                 containsAny(
                         content,
-
                         "police",
                         "shooting",
                         "shot",
@@ -2845,7 +2754,6 @@ public class EventsFragment extends Fragment {
         if (
                 containsAny(
                         content,
-
                         "power outage",
                         "outage",
                         "electric",
@@ -2866,7 +2774,6 @@ public class EventsFragment extends Fragment {
         if (
                 containsAny(
                         content,
-
                         "crash",
                         "collision",
                         "accident",
@@ -2894,7 +2801,6 @@ public class EventsFragment extends Fragment {
         if (
                 containsAny(
                         content,
-
                         "storm",
                         "thunderstorm",
                         "tornado",
@@ -2915,7 +2821,6 @@ public class EventsFragment extends Fragment {
         if (
                 containsAny(
                         content,
-
                         "environment",
                         "environmental",
                         "pollution",
@@ -2945,13 +2850,10 @@ public class EventsFragment extends Fragment {
     ) {
 
         return value == null
-
                 ? ""
-
-                : value
-                  .toLowerCase(
-                          Locale.US
-                  );
+                : value.toLowerCase(
+                Locale.US
+        );
     }
 
 
@@ -3047,9 +2949,7 @@ public class EventsFragment extends Fragment {
                 );
 
         int iconBackground;
-
         int iconColor;
-
         int iconResource;
 
         switch (
@@ -3081,7 +2981,6 @@ public class EventsFragment extends Fragment {
 
                 break;
 
-
             case TRAFFIC:
 
                 iconBackground =
@@ -3106,7 +3005,6 @@ public class EventsFragment extends Fragment {
                         R.drawable.ic_news_traffic;
 
                 break;
-
 
             case WEATHER:
 
@@ -3133,7 +3031,6 @@ public class EventsFragment extends Fragment {
 
                 break;
 
-
             case UTILITIES:
 
                 iconBackground =
@@ -3159,7 +3056,6 @@ public class EventsFragment extends Fragment {
 
                 break;
 
-
             case ENVIRONMENT:
 
                 iconBackground =
@@ -3184,7 +3080,6 @@ public class EventsFragment extends Fragment {
                         R.drawable.ic_news_environment;
 
                 break;
-
 
             case CIVIC:
             default:
@@ -3286,7 +3181,6 @@ public class EventsFragment extends Fragment {
 
         if (
                 link == null
-
                         || link
                         .trim()
                         .isEmpty()
@@ -3299,9 +3193,7 @@ public class EventsFragment extends Fragment {
 
             Intent intent =
                     new Intent(
-
                             Intent.ACTION_VIEW,
-
                             Uri.parse(
                                     link
                             )
@@ -3336,11 +3228,8 @@ public class EventsFragment extends Fragment {
 
         if (
                 localNewsContainer == null
-
                         || tvLocalNewsCount == null
-
                         || tvLocalNewsLocation == null
-
                         || localNewsEmptyLayout == null
         ) {
 
@@ -3367,20 +3256,12 @@ public class EventsFragment extends Fragment {
     }
 
 
-    // internal models
-
     private enum LocalNewsType {
-
         PUBLIC_SAFETY,
-
         TRAFFIC,
-
         WEATHER,
-
         UTILITIES,
-
         ENVIRONMENT,
-
         CIVIC
     }
 
@@ -3388,7 +3269,6 @@ public class EventsFragment extends Fragment {
     private static class DistanceMatch {
 
         final ImportantLocation location;
-
         final double distanceMeters;
 
         DistanceMatch(
@@ -3408,27 +3288,17 @@ public class EventsFragment extends Fragment {
     private static class NearbyEventItem {
 
         final String eventId;
-
         final String category;
-
         final String status;
-
         final double averageSeverity;
-
         final int uniqueUserCount;
-
         final int commentCount;
-
         final double latitude;
-
         final double longitude;
-
         final Timestamp createdAt;
-
         final Timestamp updatedAt;
 
         double displayDistanceMeters;
-
         String displayLocationName;
 
         NearbyEventItem(

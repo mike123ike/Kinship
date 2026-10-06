@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,27 +17,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+
     <!-- fixed pin in the center of the screen -->
     <ImageView
         android:layout_width="36dp"
         android:layout_height="36dp"
+        android:layout_marginBottom="36dp"
         android:src="@drawable/ic_location"
         app:tint="@color/primary"
-        android:layout_marginBottom="36dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+
     <!-- top bar -->
     <LinearLayout
+        android:id="@+id/top_bar"
         android:layout_width="0dp"
         android:layout_height="56dp"
-        android:orientation="horizontal"
+        android:background="@color/toolbar"
         android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingStart="12dp"
         android:paddingEnd="16dp"
-        android:background="@color/toolbar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -45,34 +49,36 @@
             android:id="@+id/btn_back"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="@color/tertiary"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="8dp" />
+            android:padding="8dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/tertiary" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:text="Pinpoint Location"
             android:textColor="@color/tertiary"
             android:textSize="17sp"
-            android:textStyle="bold"
-            android:layout_marginStart="8dp" />
+            android:textStyle="bold" />
+
     </LinearLayout>
 
-    <!-- bottom card , address + confirm button -->
+
+    <!-- bottom card -->
     <androidx.cardview.widget.CardView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="@color/cardBackground"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="24dp"
+        app:cardBackgroundColor="@color/cardBackground"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -86,26 +92,26 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:letterSpacing="0.1"
                 android:text="SELECTED LOCATION"
                 android:textColor="@color/textSecondary"
                 android:textSize="11sp"
-                android:letterSpacing="0.1"
-                android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginBottom="14dp"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="14dp">
+                android:orientation="horizontal">
 
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
+                    android:layout_marginEnd="8dp"
                     android:src="@drawable/ic_location"
-                    app:tint="@color/primary"
-                    android:layout_marginEnd="8dp" />
+                    app:tint="@color/primary" />
 
                 <TextView
                     android:id="@+id/tv_address"
@@ -115,6 +121,7 @@
                     android:text="Move the map to select a location"
                     android:textColor="@color/tertiary"
                     android:textSize="14sp" />
+
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
@@ -128,7 +135,9 @@
                 android:textStyle="bold"
                 app:backgroundTint="@color/primary"
                 app:cornerRadius="10dp" />
+
         </LinearLayout>
+
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

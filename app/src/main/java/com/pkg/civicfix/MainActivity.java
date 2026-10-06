@@ -1,69 +1,124 @@
 package com.pkg.civicfix;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.pkg.civicfix.base.CivicFixActivity;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends CivicFixActivity {
 
     public static final String EXTRA_OPEN_EVENT_ID =
             "open_event_id";
+
+
+    private static final String PREFS_NAME =
+            "kinship_prefs";
+
+
+    private static final String KEY_LOCATION_PERMISSION_ASKED =
+            "location_permission_asked";
+
 
     private View topBar;
 
     private BottomNavigationView bottomNav;
 
-    // event whose popup should be restored after leaving photos/comments
+
     private String pendingPopupEventId;
 
-    // event requested by my reports -> view on map
+
     private String pendingMapEventId;
+
+
+    private final ActivityResultLauncher<String[]>
+            locationPermissionLauncher =
+
+            registerForActivityResult(
+                    new ActivityResultContracts
+                            .RequestMultiplePermissions(),
+
+                    result -> {
+
+                        getSharedPreferences(
+                                PREFS_NAME,
+                                MODE_PRIVATE
+                        )
+                                .edit()
+                                .putBoolean(
+                                        KEY_LOCATION_PERMISSION_ASKED,
+                                        true
+                                )
+                                .apply();
+
+
+                        if (
+                                bottomNav != null
+                        ) {
+
+                            bottomNav.setSelectedItemId(
+                                    R.id.nav_map
+                            );
+                        }
+                    }
+            );
+
 
     @Override
     protected void onCreate(
             Bundle savedInstanceState
     ) {
+
         super.onCreate(
                 savedInstanceState
         );
 
+
         setContentView(
                 R.layout.main_activity
         );
+
 
         topBar =
                 findViewById(
                         R.id.top_bar
                 );
 
+
         bottomNav =
                 findViewById(
                         R.id.bottom_nav
                 );
+
 
         bottomNav
                 .setItemActiveIndicatorEnabled(
                         true
                 );
 
+
         findViewById(
                 R.id.btn_settings
-        ).setOnClickListener(v ->
-
-                startActivity(
-                        new Intent(
-                                this,
-                                SettingsActivity.class
+        ).setOnClickListener(
+                v ->
+                        startActivity(
+                                new Intent(
+                                        this,
+                                        SettingsActivity.class
+                                )
                         )
-                )
         );
+
 
         bottomNav
                 .setOnItemSelectedListener(
@@ -72,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
                             pendingPopupEventId =
                                     null;
 
+
                             getSupportFragmentManager()
                                     .popBackStack(
                                             null,
@@ -79,10 +135,13 @@ public class MainActivity extends AppCompatActivity {
                                                     .POP_BACK_STACK_INCLUSIVE
                                     );
 
+
                             Fragment selected;
+
 
                             int id =
                                     item.getItemId();
+
 
                             if (
                                     id
@@ -114,8 +173,10 @@ public class MainActivity extends AppCompatActivity {
                                         new ProfileFragment();
                             }
 
+
                             Fragment finalSelected =
                                     selected;
+
 
                             FragmentTransaction transaction =
                                     getSupportFragmentManager()
@@ -124,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
                                                     R.id.fragment_container,
                                                     selected
                                             );
+
 
                             if (
                                     finalSelected
@@ -137,14 +199,18 @@ public class MainActivity extends AppCompatActivity {
                                                     pendingMapEventId
                                                             == null
                                             ) {
+
                                                 return;
                                             }
+
 
                                             String eventId =
                                                     pendingMapEventId;
 
+
                                             pendingMapEventId =
                                                     null;
+
 
                                             ((MapFragment)
                                                     finalSelected)
@@ -155,12 +221,15 @@ public class MainActivity extends AppCompatActivity {
                                 );
                             }
 
+
                             transaction
                                     .commitAllowingStateLoss();
+
 
                             return true;
                         }
                 );
+
 
         getSupportFragmentManager()
                 .addOnBackStackChangedListener(
@@ -178,11 +247,13 @@ public class MainActivity extends AppCompatActivity {
                                 return;
                             }
 
+
                             Fragment visibleFragment =
                                     getSupportFragmentManager()
                                             .findFragmentById(
                                                     R.id.fragment_container
                                             );
+
 
                             if (
                                     visibleFragment
@@ -192,14 +263,19 @@ public class MainActivity extends AppCompatActivity {
                                 String eventId =
                                         pendingPopupEventId;
 
+
                                 pendingPopupEventId =
                                         null;
+
 
                                 View mapView =
                                         visibleFragment
                                                 .getView();
 
-                                if (mapView != null) {
+
+                                if (
+                                        mapView != null
+                                ) {
 
                                     mapView.post(
                                             () ->
@@ -214,6 +290,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                 );
 
+
         if (
                 savedInstanceState == null
         ) {
@@ -224,6 +301,7 @@ public class MainActivity extends AppCompatActivity {
                                     EXTRA_OPEN_EVENT_ID
                             );
 
+
             if (
                     eventId != null
                             && !eventId.isEmpty()
@@ -233,29 +311,98 @@ public class MainActivity extends AppCompatActivity {
                         eventId;
             }
 
-            bottomNav
-                    .setSelectedItemId(
-                            R.id.nav_map
-                    );
+
+            openInitialMapAndRequestLocationIfNeeded();
         }
     }
+
+
+    private void openInitialMapAndRequestLocationIfNeeded() {
+
+        if (
+                hasLocationPermission()
+        ) {
+
+            bottomNav.setSelectedItemId(
+                    R.id.nav_map
+            );
+
+
+            return;
+        }
+
+
+        boolean alreadyAsked =
+                getSharedPreferences(
+                        PREFS_NAME,
+                        MODE_PRIVATE
+                )
+                        .getBoolean(
+                                KEY_LOCATION_PERMISSION_ASKED,
+                                false
+                        );
+
+
+        if (
+                alreadyAsked
+        ) {
+
+            bottomNav.setSelectedItemId(
+                    R.id.nav_map
+            );
+
+
+            return;
+        }
+
+
+        locationPermissionLauncher.launch(
+                new String[] {
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                }
+        );
+    }
+
+
+    private boolean hasLocationPermission() {
+
+        return ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+        )
+                == PackageManager.PERMISSION_GRANTED
+
+                ||
+
+                ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+                        == PackageManager.PERMISSION_GRANTED;
+    }
+
 
     @Override
     protected void onNewIntent(
             Intent intent
     ) {
+
         super.onNewIntent(
                 intent
         );
+
 
         setIntent(
                 intent
         );
 
+
         String eventId =
                 intent.getStringExtra(
                         EXTRA_OPEN_EVENT_ID
                 );
+
 
         if (
                 eventId != null
@@ -268,7 +415,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // my reports -> view on map
 
     public void openMapAtEvent(
             String eventId
@@ -278,11 +424,14 @@ public class MainActivity extends AppCompatActivity {
                 eventId == null
                         || eventId.isEmpty()
         ) {
+
             return;
         }
 
+
         pendingPopupEventId =
                 null;
+
 
         if (
                 bottomNav
@@ -296,6 +445,7 @@ public class MainActivity extends AppCompatActivity {
                                     R.id.fragment_container
                             );
 
+
             if (
                     fragment
                             instanceof MapFragment
@@ -306,19 +456,22 @@ public class MainActivity extends AppCompatActivity {
                                 eventId
                         );
 
+
                 return;
             }
         }
 
-        // switching tabs invokes navigation listener above
+
         pendingMapEventId =
                 eventId;
+
 
         bottomNav
                 .setSelectedItemId(
                         R.id.nav_map
                 );
     }
+
 
     public void openEventPhotos(
             String eventId
@@ -327,14 +480,17 @@ public class MainActivity extends AppCompatActivity {
         pendingPopupEventId =
                 eventId;
 
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .add(
                         R.id.fragment_container,
+
                         EventPhotosFragment
                                 .newInstance(
                                         eventId
                                 ),
+
                         "event_photos"
                 )
                 .addToBackStack(
@@ -342,6 +498,7 @@ public class MainActivity extends AppCompatActivity {
                 )
                 .commit();
     }
+
 
     public void openEventComments(
             String eventId
@@ -350,14 +507,17 @@ public class MainActivity extends AppCompatActivity {
         pendingPopupEventId =
                 eventId;
 
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .add(
                         R.id.fragment_container,
+
                         EventCommentsFragment
                                 .newInstance(
                                         eventId
                                 ),
+
                         "event_comments"
                 )
                 .addToBackStack(
@@ -365,6 +525,7 @@ public class MainActivity extends AppCompatActivity {
                 )
                 .commit();
     }
+
 
     public void setMainChromeVisible(
             boolean visible
@@ -375,14 +536,20 @@ public class MainActivity extends AppCompatActivity {
                         ? View.VISIBLE
                         : View.GONE;
 
-        if (topBar != null) {
+
+        if (
+                topBar != null
+        ) {
 
             topBar.setVisibility(
                     visibility
             );
         }
 
-        if (bottomNav != null) {
+
+        if (
+                bottomNav != null
+        ) {
 
             bottomNav.setVisibility(
                     visibility

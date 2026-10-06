@@ -10,7 +10,6 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.GetCredentialRequest;
@@ -25,7 +24,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.pkg.civicfix.base.CivicFixActivity;
 import com.pkg.civicfix.model.User;
@@ -35,6 +34,7 @@ public class LoginActivity
 
     private static final String SUPPORT_EMAIL =
             "civicfixtestadmin01@gmail.com";
+
 
     private CredentialManager manager;
 
@@ -94,6 +94,7 @@ public class LoginActivity
 
             resetUI();
 
+
             showToast(
                     "Sign-In Error: "
                             + error.getLocalizedMessage()
@@ -111,9 +112,11 @@ public class LoginActivity
                 savedInstanceState
         );
 
+
         setContentView(
                 R.layout.login_activity
         );
+
 
         auth =
                 FirebaseAuth.getInstance();
@@ -121,55 +124,78 @@ public class LoginActivity
         db =
                 FirebaseFirestore.getInstance();
 
+
         btnSignin =
                 findViewById(
                         R.id.btn_signin
                 );
 
 
-        // footer links
+        // footer
+
         findViewById(
                 R.id.tvPrivacyPolicy
         ).setOnClickListener(
-                v -> openLegalPage(
-                        LegalActivity.PAGE_PRIVACY
-                )
+                v ->
+
+                        openLegalPage(
+                                LegalActivity.PAGE_PRIVACY
+                        )
         );
 
 
         findViewById(
                 R.id.tvTerms
         ).setOnClickListener(
-                v -> openLegalPage(
-                        LegalActivity.PAGE_TERMS
-                )
+                v ->
+
+                        openLegalPage(
+                                LegalActivity.PAGE_TERMS
+                        )
         );
 
 
         findViewById(
                 R.id.tvSupport
         ).setOnClickListener(
-                v -> openSupportEmail()
+                v ->
+
+                        openSupportEmail()
         );
 
 
-        // already signed in
+        // existing auth session
+
+        FirebaseUser currentUser =
+                auth.getCurrentUser();
+
+
         if (
-                auth.getCurrentUser()
-                        != null
+                currentUser != null
         ) {
 
             btnSignin.setEnabled(
                     false
             );
 
-            applyDarkMode();
+
+            // an auth account can exist even if profile creation previously failed. always verify /users/{uid}.
+            ensureUserProfile(
+                    currentUser,
+                    false
+            );
+
 
             return;
         }
 
 
-        // google sign in
+        prepareGoogleSignIn();
+    }
+
+
+    private void prepareGoogleSignIn() {
+
         manager =
                 CredentialManager.create(
                         this
@@ -208,18 +234,30 @@ public class LoginActivity
     ) {
 
         if (
+                manager == null
+                        || request == null
+        ) {
+
+            prepareGoogleSignIn();
+        }
+
+
+        if (
                 cancel != null
         ) {
 
             cancel.cancel();
         }
 
+
         cancel =
                 new CancellationSignal();
+
 
         btnSignin.setEnabled(
                 false
         );
+
 
         manager.getCredentialAsync(
                 this,
@@ -236,11 +274,11 @@ public class LoginActivity
     ) {
 
         AuthCredential credential =
-                GoogleAuthProvider
-                        .getCredential(
-                                token,
-                                null
-                        );
+                GoogleAuthProvider.getCredential(
+                        token,
+                        null
+                );
+
 
         auth.signInWithCredential(
                         credential
@@ -252,98 +290,13 @@ public class LoginActivity
     }
 
 
-    private void resetUI() {
-
-        btnSignin.setEnabled(
-                true
-        );
-    }
-
-
     private void onSigninComplete(
             Task<AuthResult> task
     ) {
 
         if (
-                task.isSuccessful()
+                !task.isSuccessful()
         ) {
-
-            AuthResult result =
-                    task.getResult();
-
-            FirebaseUser user =
-                    result.getUser();
-
-            if (
-                    user == null
-            ) {
-
-                resetUI();
-
-                showToast(
-                        "Authentication Failed"
-                );
-
-                return;
-            }
-
-
-            if (
-                    result.getAdditionalUserInfo()
-                            != null
-
-                            && result
-                            .getAdditionalUserInfo()
-                            .isNewUser()
-            ) {
-
-                User profile =
-                        new User(
-                                user.getUid(),
-                                user.getDisplayName(),
-                                user.getEmail()
-                        );
-
-
-                db.collection("users")
-                        .document(
-                                user.getUid()
-                        )
-                        .set(
-                                profile
-                        )
-                        .addOnSuccessListener(
-                                this,
-
-                                ignored -> {
-
-                                    showToast(
-                                            "Account Created Successfully"
-                                    );
-
-                                    goToMainScreen();
-                                }
-                        )
-                        .addOnFailureListener(
-                                this,
-
-                                error -> {
-
-                                    resetUI();
-
-                                    showToast(
-                                            "Account Creation Failure: "
-                                                    + error.getLocalizedMessage()
-                                    );
-                                }
-                        );
-
-            } else {
-
-                applyDarkMode();
-            }
-
-        } else {
 
             resetUI();
 
@@ -360,76 +313,173 @@ public class LoginActivity
                                     : "Unknown Error"
                     )
             );
-        }
-    }
 
-
-    private void goToMainScreen() {
-
-        goToActivity(
-                MainActivity.class,
-                true
-        );
-    }
-
-
-    private void applyDarkMode() {
-
-        String uid =
-                auth.getUid();
-
-
-        if (
-                uid == null
-        ) {
-
-            showToast(
-                    "Welcome Back"
-            );
-
-            goToMainScreen();
 
             return;
         }
 
 
-        db.collection("users")
-                .document(uid)
-                .get()
+        AuthResult result =
+                task.getResult();
+
+
+        FirebaseUser user =
+                result.getUser();
+
+
+        if (
+                user == null
+        ) {
+
+            resetUI();
+
+
+            showToast(
+                    "Authentication Failed"
+            );
+
+
+            return;
+        }
+
+
+        boolean newAuthUser =
+                result.getAdditionalUserInfo()
+                        != null
+
+                        && result
+                        .getAdditionalUserInfo()
+                        .isNewUser();
+
+
+        ensureUserProfile(
+                user,
+                newAuthUser
+        );
+    }
+
+
+    private void ensureUserProfile(
+            FirebaseUser firebaseUser,
+            boolean newAuthUser
+    ) {
+
+        DocumentReference userRef =
+                db.collection(
+                                "users"
+                        )
+                        .document(
+                                firebaseUser.getUid()
+                        );
+
+
+        userRef.get()
                 .addOnSuccessListener(
                         this,
 
-                        (DocumentSnapshot snapshot) -> {
+                        snapshot -> {
 
                             if (
                                     snapshot.exists()
                             ) {
 
-                                User profile =
-                                        snapshot.toObject(
-                                                User.class
+                                // local kinship theme is authoritative. keep firestore's backup in sync.
+                                Boolean storedDark =
+                                        snapshot.getBoolean(
+                                                "darkMode"
+                                        );
+
+
+                                boolean localDark =
+                                        ThemeManager.isDarkMode(
+                                                this
                                         );
 
 
                                 if (
-                                        profile != null
-                                                && profile.isDarkMode()
-                                                && AppCompatDelegate
-                                                .getDefaultNightMode()
-                                                != AppCompatDelegate.MODE_NIGHT_YES
+                                        storedDark == null
+                                                || storedDark != localDark
                                 ) {
 
-                                    AppCompatDelegate
-                                            .setDefaultNightMode(
-                                                    AppCompatDelegate.MODE_NIGHT_YES
-                                            );
+                                    userRef.update(
+                                            "darkMode",
+                                            localDark
+                                    );
                                 }
+
+
+                                showToast(
+                                        "Welcome Back"
+                                );
+
+
+                                goToMainScreen();
+
+                                return;
                             }
 
 
-                            showToast(
-                                    "Welcome Back"
+                            // firebase auth succeeded but firestore profile is missing. repair it automatically.
+                            createUserProfile(
+                                    userRef,
+                                    firebaseUser,
+                                    newAuthUser
                             );
+                        }
+                )
+                .addOnFailureListener(
+                        this,
+
+                        error -> {
+
+                            resetUI();
+
+
+                            showToast(
+                                    "Could not load your profile: "
+                                            + error.getLocalizedMessage()
+                            );
+                        }
+                );
+    }
+
+
+    private void createUserProfile(
+            DocumentReference userRef,
+            FirebaseUser firebaseUser,
+            boolean newAuthUser
+    ) {
+
+        User profile =
+                new User(
+                        firebaseUser.getUid(),
+                        firebaseUser.getDisplayName(),
+                        firebaseUser.getEmail()
+                );
+
+
+        // store the same theme kinship is actually using.
+        profile.setDarkMode(
+                ThemeManager.isDarkMode(
+                        this
+                )
+        );
+
+
+        userRef.set(
+                        profile
+                )
+                .addOnSuccessListener(
+                        this,
+
+                        ignored -> {
+
+                            showToast(
+                                    newAuthUser
+                                            ? "Account Created Successfully"
+                                            : "Profile restored"
+                            );
+
 
                             goToMainScreen();
                         }
@@ -439,13 +489,45 @@ public class LoginActivity
 
                         error -> {
 
-                            showToast(
-                                    "Welcome Back"
-                            );
+                            // important: do not leave a firebase auth session active if its firestore profile could not be created.
+                            auth.signOut();
 
-                            goToMainScreen();
+
+                            resetUI();
+
+
+                            if (
+                                    manager == null
+                                            || request == null
+                            ) {
+
+                                prepareGoogleSignIn();
+                            }
+
+
+                            showToast(
+                                    "Could not create your profile: "
+                                            + error.getLocalizedMessage()
+                            );
                         }
                 );
+    }
+
+
+    private void resetUI() {
+
+        btnSignin.setEnabled(
+                true
+        );
+    }
+
+
+    private void goToMainScreen() {
+
+        goToActivity(
+                MainActivity.class,
+                true
+        );
     }
 
 
@@ -459,10 +541,12 @@ public class LoginActivity
                         LegalActivity.class
                 );
 
+
         intent.putExtra(
                 LegalActivity.EXTRA_PAGE,
                 page
         );
+
 
         startActivity(
                 intent
@@ -475,6 +559,7 @@ public class LoginActivity
         String subject =
                 "Kinship Support";
 
+
         String body =
                 "Please describe what you need help with:\n\n";
 
@@ -483,10 +568,12 @@ public class LoginActivity
                 Uri.parse(
                         "mailto:"
                                 + SUPPORT_EMAIL
+
                                 + "?subject="
                                 + Uri.encode(
                                 subject
                         )
+
                                 + "&body="
                                 + Uri.encode(
                                 body

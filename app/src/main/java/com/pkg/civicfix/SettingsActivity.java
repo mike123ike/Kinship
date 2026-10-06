@@ -6,20 +6,16 @@ import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.CompoundButton;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.pkg.civicfix.base.CivicFixActivity;
-import com.pkg.civicfix.model.User;
 
 public class SettingsActivity
         extends CivicFixActivity {
@@ -27,11 +23,13 @@ public class SettingsActivity
     private static final String SUPPORT_EMAIL =
             "civicfixtestadmin01@gmail.com";
 
+
     private FirebaseAuth auth;
 
     private FirebaseFirestore db;
 
     private String uid;
+
 
     private View btnLogout;
 
@@ -42,6 +40,7 @@ public class SettingsActivity
     private View btnSupport;
 
     private View btnCredits;
+
 
     private Toolbar toolbar;
 
@@ -57,15 +56,18 @@ public class SettingsActivity
                 savedInstanceState
         );
 
+
         auth =
                 FirebaseAuth.getInstance();
 
         db =
                 FirebaseFirestore.getInstance();
 
+
         setContentView(
                 R.layout.settings_activity
         );
+
 
         toolbar =
                 findViewById(
@@ -102,12 +104,15 @@ public class SettingsActivity
                         R.id.toggle_dark_mode
                 );
 
+
         setSupportActionBar(
                 toolbar
         );
 
+
         uid =
                 auth.getUid();
+
 
         if (
                 uid == null
@@ -126,7 +131,44 @@ public class SettingsActivity
         }
 
 
-        // privacy & safety
+        // theme
+        toggleDarkMode.setChecked(
+                ThemeManager.isDarkMode(
+                        this
+                )
+        );
+
+
+        toggleDarkMode
+                .setOnCheckedChangeListener(
+                        (button, isChecked) -> {
+                            ThemeManager.saveChoice(
+                                    this,
+                                    isChecked
+                            );
+
+                            db.collection("users")
+                                    .document(uid)
+                                    .update(
+                                            "darkMode",
+                                            isChecked
+                                    )
+                                    .addOnFailureListener(
+                                            error ->
+
+                                                    showToast(
+                                                            "Theme saved on this device, but cloud sync failed"
+                                                    )
+                                    );
+
+                            ThemeManager
+                                    .applySavedTheme(
+                                            this
+                                    );
+                        }
+                );
+
+
         btnPrivacySafety.setOnClickListener(
                 v -> {
 
@@ -142,24 +184,24 @@ public class SettingsActivity
                 }
         );
 
-
-        // terms
         btnTerms.setOnClickListener(
-                v -> openLegalPage(
-                        LegalActivity.PAGE_TERMS
-                )
+                v ->
+
+                        openLegalPage(
+                                LegalActivity.PAGE_TERMS
+                        )
         );
 
-
-        // support
         btnSupport.setOnClickListener(
-                v -> openSupportEmail()
+                v ->
+
+                        openSupportEmail()
         );
 
-
-        // credits
         btnCredits.setOnClickListener(
-                v -> showCredits()
+                v ->
+
+                        showCredits()
         );
 
 
@@ -190,6 +232,7 @@ public class SettingsActivity
                 v -> finish()
         );
 
+
         if (
                 toolbar.getNavigationIcon()
                         != null
@@ -205,113 +248,6 @@ public class SettingsActivity
                             )
                     );
         }
-
-
-        loadUserSettings();
-    }
-
-
-    private void loadUserSettings() {
-
-        db.collection("users")
-                .document(uid)
-                .get()
-                .addOnSuccessListener(
-                        this,
-
-                        (DocumentSnapshot snapshot) -> {
-
-                            if (
-                                    !snapshot.exists()
-                            ) {
-
-                                showToast(
-                                        "Profile not found, login again"
-                                );
-
-                                goToActivity(
-                                        LoginActivity.class,
-                                        true
-                                );
-
-                                return;
-                            }
-
-                            User user =
-                                    snapshot.toObject(
-                                            User.class
-                                    );
-
-                            if (
-                                    user == null
-                            ) {
-
-                                return;
-                            }
-
-                            initializeWidgetStates(
-                                    user
-                            );
-                        }
-                )
-                .addOnFailureListener(
-                        error ->
-
-                                showToast(
-                                        "Failed to load settings"
-                                )
-                );
-    }
-
-
-    private void initializeWidgetStates(
-            User user
-    ) {
-
-        toggleDarkMode.setChecked(
-                user.isDarkMode()
-        );
-
-        toggleDarkMode.setOnCheckedChangeListener(
-                (
-                        CompoundButton button,
-                        boolean isChecked
-                ) -> {
-
-                    if (
-                            isChecked
-                    ) {
-
-                        AppCompatDelegate
-                                .setDefaultNightMode(
-                                        AppCompatDelegate.MODE_NIGHT_YES
-                                );
-
-                    } else {
-
-                        AppCompatDelegate
-                                .setDefaultNightMode(
-                                        AppCompatDelegate.MODE_NIGHT_NO
-                                );
-                    }
-
-                    db.collection("users")
-                            .document(uid)
-                            .update(
-                                    "darkMode",
-                                    isChecked
-                            )
-                            .addOnFailureListener(
-                                    this,
-
-                                    error ->
-
-                                            showToast(
-                                                    "Failed to sync dark mode setting with database"
-                                            )
-                            );
-                }
-        );
     }
 
 
@@ -325,10 +261,12 @@ public class SettingsActivity
                         LegalActivity.class
                 );
 
+
         intent.putExtra(
                 LegalActivity.EXTRA_PAGE,
                 page
         );
+
 
         startActivity(
                 intent
@@ -341,6 +279,7 @@ public class SettingsActivity
         String subject =
                 "Kinship Support";
 
+
         String body =
                 "Please describe what you need help with:\n\n";
 
@@ -349,10 +288,12 @@ public class SettingsActivity
                 Uri.parse(
                         "mailto:"
                                 + SUPPORT_EMAIL
+
                                 + "?subject="
                                 + Uri.encode(
                                 subject
                         )
+
                                 + "&body="
                                 + Uri.encode(
                                 body
@@ -388,11 +329,13 @@ public class SettingsActivity
 
         String credits =
                 "Kinship is built using:\n\n"
+
                         + "• Firebase Authentication and Firestore\n"
                         + "• Google Maps Platform\n"
                         + "• Cloudinary\n"
                         + "• NewsData.io\n"
                         + "• Android and Material Components\n\n"
+
                         + "Kinship\n"
                         + "© 2026";
 
