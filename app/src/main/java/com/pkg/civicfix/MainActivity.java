@@ -9,6 +9,9 @@ import android.view.View;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -21,24 +24,24 @@ public class MainActivity extends CivicFixActivity {
     public static final String EXTRA_OPEN_EVENT_ID =
             "open_event_id";
 
-
     private static final String PREFS_NAME =
             "kinship_prefs";
-
 
     private static final String KEY_LOCATION_PERMISSION_ASKED =
             "location_permission_asked";
 
-
     private View topBar;
+
+    private View fragmentContainer;
 
     private BottomNavigationView bottomNav;
 
-
     private String pendingPopupEventId;
 
-
     private String pendingMapEventId;
+
+    private boolean mainChromeVisible =
+            true;
 
 
     private final ActivityResultLauncher<String[]>
@@ -61,7 +64,6 @@ public class MainActivity extends CivicFixActivity {
                                 )
                                 .apply();
 
-
                         if (
                                 bottomNav != null
                         ) {
@@ -83,29 +85,31 @@ public class MainActivity extends CivicFixActivity {
                 savedInstanceState
         );
 
-
         setContentView(
                 R.layout.main_activity
         );
-
 
         topBar =
                 findViewById(
                         R.id.top_bar
                 );
 
+        fragmentContainer =
+                findViewById(
+                        R.id.fragment_container
+                );
 
         bottomNav =
                 findViewById(
                         R.id.bottom_nav
                 );
 
+        configureSubpageInsets();
 
         bottomNav
                 .setItemActiveIndicatorEnabled(
                         true
                 );
-
 
         findViewById(
                 R.id.btn_settings
@@ -119,14 +123,12 @@ public class MainActivity extends CivicFixActivity {
                         )
         );
 
-
         bottomNav
                 .setOnItemSelectedListener(
                         item -> {
 
                             pendingPopupEventId =
                                     null;
-
 
                             getSupportFragmentManager()
                                     .popBackStack(
@@ -135,33 +137,27 @@ public class MainActivity extends CivicFixActivity {
                                                     .POP_BACK_STACK_INCLUSIVE
                                     );
 
-
                             Fragment selected;
-
 
                             int id =
                                     item.getItemId();
 
-
                             if (
-                                    id
-                                            == R.id.nav_map
+                                    id == R.id.nav_map
                             ) {
 
                                 selected =
                                         new MapFragment();
 
                             } else if (
-                                    id
-                                            == R.id.nav_events
+                                    id == R.id.nav_events
                             ) {
 
                                 selected =
                                         new EventsFragment();
 
                             } else if (
-                                    id
-                                            == R.id.nav_report
+                                    id == R.id.nav_report
                             ) {
 
                                 selected =
@@ -173,10 +169,8 @@ public class MainActivity extends CivicFixActivity {
                                         new ProfileFragment();
                             }
 
-
                             Fragment finalSelected =
                                     selected;
-
 
                             FragmentTransaction transaction =
                                     getSupportFragmentManager()
@@ -185,7 +179,6 @@ public class MainActivity extends CivicFixActivity {
                                                     R.id.fragment_container,
                                                     selected
                                             );
-
 
                             if (
                                     finalSelected
@@ -203,14 +196,11 @@ public class MainActivity extends CivicFixActivity {
                                                 return;
                                             }
 
-
                                             String eventId =
                                                     pendingMapEventId;
 
-
                                             pendingMapEventId =
                                                     null;
-
 
                                             ((MapFragment)
                                                     finalSelected)
@@ -221,15 +211,12 @@ public class MainActivity extends CivicFixActivity {
                                 );
                             }
 
-
                             transaction
                                     .commitAllowingStateLoss();
-
 
                             return true;
                         }
                 );
-
 
         getSupportFragmentManager()
                 .addOnBackStackChangedListener(
@@ -247,13 +234,11 @@ public class MainActivity extends CivicFixActivity {
                                 return;
                             }
 
-
                             Fragment visibleFragment =
                                     getSupportFragmentManager()
                                             .findFragmentById(
                                                     R.id.fragment_container
                                             );
-
 
                             if (
                                     visibleFragment
@@ -263,15 +248,12 @@ public class MainActivity extends CivicFixActivity {
                                 String eventId =
                                         pendingPopupEventId;
 
-
                                 pendingPopupEventId =
                                         null;
-
 
                                 View mapView =
                                         visibleFragment
                                                 .getView();
-
 
                                 if (
                                         mapView != null
@@ -290,7 +272,6 @@ public class MainActivity extends CivicFixActivity {
                         }
                 );
 
-
         if (
                 savedInstanceState == null
         ) {
@@ -301,7 +282,6 @@ public class MainActivity extends CivicFixActivity {
                                     EXTRA_OPEN_EVENT_ID
                             );
 
-
             if (
                     eventId != null
                             && !eventId.isEmpty()
@@ -311,9 +291,59 @@ public class MainActivity extends CivicFixActivity {
                         eventId;
             }
 
-
             openInitialMapAndRequestLocationIfNeeded();
         }
+    }
+
+
+    private void configureSubpageInsets() {
+
+        ViewCompat.setOnApplyWindowInsetsListener(
+                fragmentContainer,
+
+                (view, windowInsets) -> {
+
+                    Insets statusBars =
+                            windowInsets.getInsets(
+                                    WindowInsetsCompat
+                                            .Type
+                                            .statusBars()
+                            );
+
+                    Insets navigationBars =
+                            windowInsets.getInsets(
+                                    WindowInsetsCompat
+                                            .Type
+                                            .navigationBars()
+                            );
+
+                    int topPadding =
+                            mainChromeVisible
+                                    ? 0
+                                    : statusBars.top / 3;
+
+                    int bottomPadding =
+                            mainChromeVisible
+                                    ? 0
+                                    : navigationBars.bottom;
+
+                    view.setPadding(
+                            0,
+                            topPadding,
+                            0,
+                            bottomPadding
+                    );
+
+                    return windowInsets;
+                }
+        );
+
+        fragmentContainer.post(
+                () ->
+                        ViewCompat.requestApplyInsets(
+                                fragmentContainer
+                        )
+        );
     }
 
 
@@ -327,10 +357,8 @@ public class MainActivity extends CivicFixActivity {
                     R.id.nav_map
             );
 
-
             return;
         }
-
 
         boolean alreadyAsked =
                 getSharedPreferences(
@@ -342,7 +370,6 @@ public class MainActivity extends CivicFixActivity {
                                 false
                         );
 
-
         if (
                 alreadyAsked
         ) {
@@ -351,10 +378,8 @@ public class MainActivity extends CivicFixActivity {
                     R.id.nav_map
             );
 
-
             return;
         }
-
 
         locationPermissionLauncher.launch(
                 new String[] {
@@ -392,17 +417,14 @@ public class MainActivity extends CivicFixActivity {
                 intent
         );
 
-
         setIntent(
                 intent
         );
-
 
         String eventId =
                 intent.getStringExtra(
                         EXTRA_OPEN_EVENT_ID
                 );
-
 
         if (
                 eventId != null
@@ -428,10 +450,8 @@ public class MainActivity extends CivicFixActivity {
             return;
         }
 
-
         pendingPopupEventId =
                 null;
-
 
         if (
                 bottomNav
@@ -445,7 +465,6 @@ public class MainActivity extends CivicFixActivity {
                                     R.id.fragment_container
                             );
 
-
             if (
                     fragment
                             instanceof MapFragment
@@ -456,15 +475,12 @@ public class MainActivity extends CivicFixActivity {
                                 eventId
                         );
 
-
                 return;
             }
         }
 
-
         pendingMapEventId =
                 eventId;
-
 
         bottomNav
                 .setSelectedItemId(
@@ -479,7 +495,6 @@ public class MainActivity extends CivicFixActivity {
 
         pendingPopupEventId =
                 eventId;
-
 
         getSupportFragmentManager()
                 .beginTransaction()
@@ -507,7 +522,6 @@ public class MainActivity extends CivicFixActivity {
         pendingPopupEventId =
                 eventId;
 
-
         getSupportFragmentManager()
                 .beginTransaction()
                 .add(
@@ -531,11 +545,13 @@ public class MainActivity extends CivicFixActivity {
             boolean visible
     ) {
 
+        mainChromeVisible =
+                visible;
+
         int visibility =
                 visible
                         ? View.VISIBLE
                         : View.GONE;
-
 
         if (
                 topBar != null
@@ -546,13 +562,21 @@ public class MainActivity extends CivicFixActivity {
             );
         }
 
-
         if (
                 bottomNav != null
         ) {
 
             bottomNav.setVisibility(
                     visibility
+            );
+        }
+
+        if (
+                fragmentContainer != null
+        ) {
+
+            ViewCompat.requestApplyInsets(
+                    fragmentContainer
             );
         }
     }

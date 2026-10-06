@@ -10,6 +10,7 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.GetCredentialRequest;
@@ -25,9 +26,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.pkg.civicfix.base.CivicFixActivity;
 import com.pkg.civicfix.model.User;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoginActivity
         extends CivicFixActivity {
@@ -35,17 +42,11 @@ public class LoginActivity
     private static final String SUPPORT_EMAIL =
             "civicfixtestadmin01@gmail.com";
 
-
     private CredentialManager manager;
-
     private GetCredentialRequest request;
-
     private FirebaseAuth auth;
-
     private FirebaseFirestore db;
-
     private CancellationSignal cancel;
-
     private Button btnSignin;
 
 
@@ -68,7 +69,6 @@ public class LoginActivity
                                                 .getData()
                                 )
                                 .getIdToken();
-
 
                 linkToFirebase(
                         token
@@ -94,7 +94,6 @@ public class LoginActivity
 
             resetUI();
 
-
             showToast(
                     "Sign-In Error: "
                             + error.getLocalizedMessage()
@@ -112,11 +111,9 @@ public class LoginActivity
                 savedInstanceState
         );
 
-
         setContentView(
                 R.layout.login_activity
         );
-
 
         auth =
                 FirebaseAuth.getInstance();
@@ -124,47 +121,36 @@ public class LoginActivity
         db =
                 FirebaseFirestore.getInstance();
 
-
         btnSignin =
                 findViewById(
                         R.id.btn_signin
                 );
 
 
-        // footer
-
         findViewById(
                 R.id.tvPrivacyPolicy
         ).setOnClickListener(
-                v ->
-
-                        openLegalPage(
-                                LegalActivity.PAGE_PRIVACY
-                        )
+                v -> openLegalPage(
+                        LegalActivity.PAGE_PRIVACY
+                )
         );
 
 
         findViewById(
                 R.id.tvTerms
         ).setOnClickListener(
-                v ->
-
-                        openLegalPage(
-                                LegalActivity.PAGE_TERMS
-                        )
+                v -> openLegalPage(
+                        LegalActivity.PAGE_TERMS
+                )
         );
 
 
         findViewById(
                 R.id.tvSupport
         ).setOnClickListener(
-                v ->
-
-                        openSupportEmail()
+                v -> openSupportEmail()
         );
 
-
-        // existing auth session
 
         FirebaseUser currentUser =
                 auth.getCurrentUser();
@@ -178,23 +164,14 @@ public class LoginActivity
                     false
             );
 
-
-            // an auth account can exist even if profile creation previously failed. always verify /users/{uid}.
-            ensureUserProfile(
+            ensureUserProfileAndContinue(
                     currentUser,
                     false
             );
 
-
             return;
         }
 
-
-        prepareGoogleSignIn();
-    }
-
-
-    private void prepareGoogleSignIn() {
 
         manager =
                 CredentialManager.create(
@@ -234,30 +211,18 @@ public class LoginActivity
     ) {
 
         if (
-                manager == null
-                        || request == null
-        ) {
-
-            prepareGoogleSignIn();
-        }
-
-
-        if (
                 cancel != null
         ) {
 
             cancel.cancel();
         }
 
-
         cancel =
                 new CancellationSignal();
-
 
         btnSignin.setEnabled(
                 false
         );
-
 
         manager.getCredentialAsync(
                 this,
@@ -274,11 +239,11 @@ public class LoginActivity
     ) {
 
         AuthCredential credential =
-                GoogleAuthProvider.getCredential(
-                        token,
-                        null
-                );
-
+                GoogleAuthProvider
+                        .getCredential(
+                                token,
+                                null
+                        );
 
         auth.signInWithCredential(
                         credential
@@ -287,6 +252,14 @@ public class LoginActivity
                         this,
                         this::onSigninComplete
                 );
+    }
+
+
+    private void resetUI() {
+
+        btnSignin.setEnabled(
+                true
+        );
     }
 
 
@@ -300,10 +273,8 @@ public class LoginActivity
 
             resetUI();
 
-
             Exception error =
                     task.getException();
-
 
             showToast(
                     "Authentication Failed: "
@@ -314,14 +285,12 @@ public class LoginActivity
                     )
             );
 
-
             return;
         }
 
 
         AuthResult result =
                 task.getResult();
-
 
         FirebaseUser user =
                 result.getUser();
@@ -333,41 +302,40 @@ public class LoginActivity
 
             resetUI();
 
-
             showToast(
                     "Authentication Failed"
             );
-
 
             return;
         }
 
 
-        boolean newAuthUser =
-                result.getAdditionalUserInfo()
-                        != null
-
+        boolean isNewUser =
+                result.getAdditionalUserInfo() != null
                         && result
                         .getAdditionalUserInfo()
                         .isNewUser();
 
 
-        ensureUserProfile(
+        ensureUserProfileAndContinue(
                 user,
-                newAuthUser
+                isNewUser
         );
     }
 
 
-    private void ensureUserProfile(
-            FirebaseUser firebaseUser,
-            boolean newAuthUser
+    private void ensureUserProfileAndContinue(
+            @NonNull FirebaseUser firebaseUser,
+            boolean isNewUser
     ) {
 
+        btnSignin.setEnabled(
+                false
+        );
+
+
         DocumentReference userRef =
-                db.collection(
-                                "users"
-                        )
+                db.collection("users")
                         .document(
                                 firebaseUser.getUid()
                         );
@@ -383,48 +351,111 @@ public class LoginActivity
                                     snapshot.exists()
                             ) {
 
-                                // local kinship theme is authoritative. keep firestore's backup in sync.
-                                Boolean storedDark =
-                                        snapshot.getBoolean(
-                                                "darkMode"
-                                        );
-
-
-                                boolean localDark =
-                                        ThemeManager.isDarkMode(
-                                                this
-                                        );
-
-
-                                if (
-                                        storedDark == null
-                                                || storedDark != localDark
-                                ) {
-
-                                    userRef.update(
-                                            "darkMode",
-                                            localDark
-                                    );
-                                }
-
-
-                                showToast(
-                                        "Welcome Back"
+                                syncGoogleProfile(
+                                        userRef,
+                                        firebaseUser
                                 );
-
-
-                                goToMainScreen();
 
                                 return;
                             }
 
 
-                            // firebase auth succeeded but firestore profile is missing. repair it automatically.
-                            createUserProfile(
-                                    userRef,
-                                    firebaseUser,
-                                    newAuthUser
+                            Map<String, Object> profile =
+                                    new HashMap<>();
+
+                            profile.put(
+                                    "anonymousReporting",
+                                    false
                             );
+
+                            profile.put(
+                                    "darkMode",
+                                    false
+                            );
+
+                            profile.put(
+                                    "official",
+                                    false
+                            );
+
+                            profile.put(
+                                    "admin",
+                                    false
+                            );
+
+                            profile.put(
+                                    "deleted",
+                                    false
+                            );
+
+                            profile.put(
+                                    "email",
+                                    firebaseUser.getEmail() == null
+                                            ? ""
+                                            : firebaseUser.getEmail()
+                            );
+
+                            profile.put(
+                                    "displayName",
+                                    getSafeDisplayName(
+                                            firebaseUser
+                                    )
+                            );
+
+                            if (
+                                    firebaseUser.getPhotoUrl()
+                                            != null
+                            ) {
+
+                                profile.put(
+                                        "pfpUrl",
+                                        firebaseUser
+                                                .getPhotoUrl()
+                                                .toString()
+                                );
+                            }
+
+                            profile.put(
+                                    "timestamp",
+                                    new Date()
+                            );
+
+
+                            userRef.set(
+                                            profile
+                                    )
+                                    .addOnSuccessListener(
+                                            this,
+
+                                            ignored -> {
+
+                                                if (
+                                                        isNewUser
+                                                ) {
+
+                                                    showToast(
+                                                            "Account Created Successfully"
+                                                    );
+                                                }
+
+                                                applyDarkMode();
+                                            }
+                                    )
+                                    .addOnFailureListener(
+                                            this,
+
+                                            error -> {
+
+                                                auth.signOut();
+
+                                                resetUI();
+
+                                                showToast(
+                                                        "Could not create your Kinship profile: "
+                                                                + error.getLocalizedMessage()
+                                                );
+                                            }
+                                    );
                         }
                 )
                 .addOnFailureListener(
@@ -432,11 +463,12 @@ public class LoginActivity
 
                         error -> {
 
+                            auth.signOut();
+
                             resetUI();
 
-
                             showToast(
-                                    "Could not load your profile: "
+                                    "Could not load your Kinship profile: "
                                             + error.getLocalizedMessage()
                             );
                         }
@@ -444,81 +476,96 @@ public class LoginActivity
     }
 
 
-    private void createUserProfile(
-            DocumentReference userRef,
-            FirebaseUser firebaseUser,
-            boolean newAuthUser
+    private void syncGoogleProfile(
+            @NonNull DocumentReference userRef,
+            @NonNull FirebaseUser firebaseUser
     ) {
 
-        User profile =
-                new User(
-                        firebaseUser.getUid(),
-                        firebaseUser.getDisplayName(),
-                        firebaseUser.getEmail()
-                );
+        Map<String, Object> updates =
+                new HashMap<>();
 
 
-        // store the same theme kinship is actually using.
-        profile.setDarkMode(
-                ThemeManager.isDarkMode(
-                        this
+        updates.put(
+                "displayName",
+                getSafeDisplayName(
+                        firebaseUser
                 )
         );
+
+
+        if (
+                firebaseUser.getPhotoUrl()
+                        != null
+        ) {
+
+            updates.put(
+                    "pfpUrl",
+                    firebaseUser
+                            .getPhotoUrl()
+                            .toString()
+            );
+        }
 
 
         userRef.set(
-                        profile
+                        updates,
+                        SetOptions.merge()
                 )
-                .addOnSuccessListener(
+                .addOnCompleteListener(
                         this,
-
-                        ignored -> {
-
-                            showToast(
-                                    newAuthUser
-                                            ? "Account Created Successfully"
-                                            : "Profile restored"
-                            );
-
-
-                            goToMainScreen();
-                        }
-                )
-                .addOnFailureListener(
-                        this,
-
-                        error -> {
-
-                            // important: do not leave a firebase auth session active if its firestore profile could not be created.
-                            auth.signOut();
-
-
-                            resetUI();
-
-
-                            if (
-                                    manager == null
-                                            || request == null
-                            ) {
-
-                                prepareGoogleSignIn();
-                            }
-
-
-                            showToast(
-                                    "Could not create your profile: "
-                                            + error.getLocalizedMessage()
-                            );
-                        }
+                        ignored -> applyDarkMode()
                 );
     }
 
 
-    private void resetUI() {
+    @NonNull
+    private String getSafeDisplayName(
+            @NonNull FirebaseUser firebaseUser
+    ) {
 
-        btnSignin.setEnabled(
-                true
-        );
+        String displayName =
+                firebaseUser.getDisplayName();
+
+
+        if (
+                displayName != null
+                        && !displayName
+                        .trim()
+                        .isEmpty()
+        ) {
+
+            return displayName.trim();
+        }
+
+
+        String email =
+                firebaseUser.getEmail();
+
+
+        if (
+                email != null
+                        && email.contains("@")
+        ) {
+
+            String emailName =
+                    email.substring(
+                            0,
+                            email.indexOf('@')
+                    );
+
+
+            if (
+                    !emailName
+                            .trim()
+                            .isEmpty()
+            ) {
+
+                return emailName.trim();
+            }
+        }
+
+
+        return "Community member";
     }
 
 
@@ -528,6 +575,78 @@ public class LoginActivity
                 MainActivity.class,
                 true
         );
+    }
+
+
+    private void applyDarkMode() {
+
+        String uid =
+                auth.getUid();
+
+
+        if (
+                uid == null
+        ) {
+
+            goToMainScreen();
+
+            return;
+        }
+
+
+        db.collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(
+                        this,
+
+                        (DocumentSnapshot snapshot) -> {
+
+                            if (
+                                    snapshot.exists()
+                            ) {
+
+                                User profile =
+                                        snapshot.toObject(
+                                                User.class
+                                        );
+
+
+                                if (
+                                        profile != null
+                                                && profile.isDarkMode()
+                                                && AppCompatDelegate
+                                                .getDefaultNightMode()
+                                                != AppCompatDelegate.MODE_NIGHT_YES
+                                ) {
+
+                                    AppCompatDelegate
+                                            .setDefaultNightMode(
+                                                    AppCompatDelegate.MODE_NIGHT_YES
+                                            );
+                                }
+                            }
+
+
+                            showToast(
+                                    "Welcome Back"
+                            );
+
+                            goToMainScreen();
+                        }
+                )
+                .addOnFailureListener(
+                        this,
+
+                        error -> {
+
+                            showToast(
+                                    "Welcome Back"
+                            );
+
+                            goToMainScreen();
+                        }
+                );
     }
 
 
@@ -541,12 +660,10 @@ public class LoginActivity
                         LegalActivity.class
                 );
 
-
         intent.putExtra(
                 LegalActivity.EXTRA_PAGE,
                 page
         );
-
 
         startActivity(
                 intent
@@ -559,7 +676,6 @@ public class LoginActivity
         String subject =
                 "Kinship Support";
 
-
         String body =
                 "Please describe what you need help with:\n\n";
 
@@ -568,12 +684,10 @@ public class LoginActivity
                 Uri.parse(
                         "mailto:"
                                 + SUPPORT_EMAIL
-
                                 + "?subject="
                                 + Uri.encode(
                                 subject
                         )
-
                                 + "&body="
                                 + Uri.encode(
                                 body

@@ -30,16 +30,25 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class EventPopupFragment extends BottomSheetDialogFragment {
+public class EventPopupFragment
+        extends BottomSheetDialogFragment {
 
-    private static final String ARG_EVENT_ID = "event_id";
+    private static final String ARG_EVENT_ID =
+            "event_id";
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
+
     private String eventId;
 
     private ImageView ivPhoto;
+    private ImageView ivCommentAvatar;
+
     private View layoutNoImage;
+    private View layoutTopComment;
+    private View layoutCommentAuthor;
+    private View btnClose;
+
     private TextView tvPhotoCount;
     private TextView tvTitle;
     private TextView tvSeverityBadge;
@@ -53,25 +62,39 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
     private TextView tvCommentTime;
     private TextView tvCommentText;
     private TextView tvCommentHearts;
-    private View layoutTopComment;
-    private View layoutCommentAuthor;
+
     private MaterialButton btnUpvote;
     private MaterialButton btnDownvote;
-    private View btnClose;
 
-    private int currentVoteScore = 0;
-    private int userVote = 0;
+    private int currentVoteScore =
+            0;
 
-    public static EventPopupFragment newInstance(String eventId) {
-        EventPopupFragment fragment = new EventPopupFragment();
+    private int userVote =
+            0;
 
-        Bundle args = new Bundle();
-        args.putString(ARG_EVENT_ID, eventId);
 
-        fragment.setArguments(args);
+    public static EventPopupFragment newInstance(
+            String eventId
+    ) {
+
+        EventPopupFragment fragment =
+                new EventPopupFragment();
+
+        Bundle args =
+                new Bundle();
+
+        args.putString(
+                ARG_EVENT_ID,
+                eventId
+        );
+
+        fragment.setArguments(
+                args
+        );
 
         return fragment;
     }
+
 
     @Nullable
     @Override
@@ -80,6 +103,7 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
+
         return inflater.inflate(
                 R.layout.fragment_event_popup,
                 container,
@@ -87,214 +111,466 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
         );
     }
 
+
     @Override
     public void onViewCreated(
             @NonNull View view,
             @Nullable Bundle savedInstanceState
     ) {
-        super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
-
-        eventId = getArguments() != null
-                ? getArguments().getString(ARG_EVENT_ID)
-                : null;
-
-        ivPhoto = view.findViewById(R.id.iv_popup_photo);
-        layoutNoImage = view.findViewById(R.id.layout_no_image);
-        tvPhotoCount = view.findViewById(R.id.tv_photo_count);
-        tvTitle = view.findViewById(R.id.tv_popup_title);
-        tvSeverityBadge = view.findViewById(R.id.tv_severity_badge);
-        tvAddress = view.findViewById(R.id.tv_popup_address);
-        tvTimeAgo = view.findViewById(R.id.tv_popup_time);
-        tvUniqueReports = view.findViewById(R.id.tv_unique_reports);
-        tvVoteScore = view.findViewById(R.id.tv_vote_score);
-        tvCommentCount = view.findViewById(R.id.tv_comment_count);
-        tvCommentAvatar = view.findViewById(R.id.tv_comment_avatar);
-        tvCommentUser = view.findViewById(R.id.tv_comment_user);
-        tvCommentTime = view.findViewById(R.id.tv_comment_time);
-        tvCommentText = view.findViewById(R.id.tv_comment_text);
-        tvCommentHearts = view.findViewById(R.id.tv_comment_hearts);
-        layoutTopComment = view.findViewById(R.id.layout_top_comment);
-
-        layoutCommentAuthor = view.findViewById(
-                R.id.layout_comment_author
+        super.onViewCreated(
+                view,
+                savedInstanceState
         );
 
-        btnUpvote = view.findViewById(R.id.btn_upvote);
-        btnDownvote = view.findViewById(R.id.btn_downvote);
-        btnClose = view.findViewById(R.id.btn_close);
+        db =
+                FirebaseFirestore.getInstance();
 
-        btnClose.setOnClickListener(v -> dismiss());
-        btnUpvote.setOnClickListener(v -> castVote(1));
-        btnDownvote.setOnClickListener(v -> castVote(-1));
+        auth =
+                FirebaseAuth.getInstance();
+
+        eventId =
+                getArguments() != null
+                        ? getArguments()
+                          .getString(
+                                  ARG_EVENT_ID
+                          )
+                        : null;
+
+        ivPhoto =
+                view.findViewById(
+                        R.id.iv_popup_photo
+                );
+
+        ivCommentAvatar =
+                view.findViewById(
+                        R.id.iv_comment_avatar
+                );
+
+        layoutNoImage =
+                view.findViewById(
+                        R.id.layout_no_image
+                );
+
+        tvPhotoCount =
+                view.findViewById(
+                        R.id.tv_photo_count
+                );
+
+        tvTitle =
+                view.findViewById(
+                        R.id.tv_popup_title
+                );
+
+        tvSeverityBadge =
+                view.findViewById(
+                        R.id.tv_severity_badge
+                );
+
+        tvAddress =
+                view.findViewById(
+                        R.id.tv_popup_address
+                );
+
+        tvTimeAgo =
+                view.findViewById(
+                        R.id.tv_popup_time
+                );
+
+        tvUniqueReports =
+                view.findViewById(
+                        R.id.tv_unique_reports
+                );
+
+        tvVoteScore =
+                view.findViewById(
+                        R.id.tv_vote_score
+                );
+
+        tvCommentCount =
+                view.findViewById(
+                        R.id.tv_comment_count
+                );
+
+        tvCommentAvatar =
+                view.findViewById(
+                        R.id.tv_comment_avatar
+                );
+
+        tvCommentUser =
+                view.findViewById(
+                        R.id.tv_comment_user
+                );
+
+        tvCommentTime =
+                view.findViewById(
+                        R.id.tv_comment_time
+                );
+
+        tvCommentText =
+                view.findViewById(
+                        R.id.tv_comment_text
+                );
+
+        tvCommentHearts =
+                view.findViewById(
+                        R.id.tv_comment_hearts
+                );
+
+        layoutTopComment =
+                view.findViewById(
+                        R.id.layout_top_comment
+                );
+
+        layoutCommentAuthor =
+                view.findViewById(
+                        R.id.layout_comment_author
+                );
+
+        btnUpvote =
+                view.findViewById(
+                        R.id.btn_upvote
+                );
+
+        btnDownvote =
+                view.findViewById(
+                        R.id.btn_downvote
+                );
+
+        btnClose =
+                view.findViewById(
+                        R.id.btn_close
+                );
+
+        btnClose.setOnClickListener(
+                v -> dismiss()
+        );
+
+        btnUpvote.setOnClickListener(
+                v -> castVote(
+                        1
+                )
+        );
+
+        btnDownvote.setOnClickListener(
+                v -> castVote(
+                        -1
+                )
+        );
 
         View.OnClickListener openPhotos =
                 v -> openPhotosPage();
 
-        ivPhoto.setOnClickListener(openPhotos);
-        tvPhotoCount.setOnClickListener(openPhotos);
+        ivPhoto.setOnClickListener(
+                openPhotos
+        );
+
+        tvPhotoCount.setOnClickListener(
+                openPhotos
+        );
 
         layoutTopComment.setOnClickListener(
                 v -> openCommentsPage()
         );
 
-        if (eventId != null) {
+        if (
+                eventId != null
+        ) {
+
             loadEventData();
+
             loadUserVote();
         }
     }
 
+
     @Override
     public void onStart() {
+
         super.onStart();
 
-        if (getDialog() instanceof BottomSheetDialog) {
+        if (
+                getDialog()
+                        instanceof BottomSheetDialog
+        ) {
+
             BottomSheetBehavior<?> behavior =
-                    ((BottomSheetDialog) getDialog())
+                    ((BottomSheetDialog)
+                            getDialog())
                             .getBehavior();
 
-            behavior.setSkipCollapsed(true);
+            behavior.setSkipCollapsed(
+                    true
+            );
 
             behavior.setState(
-                    BottomSheetBehavior.STATE_EXPANDED
+                    BottomSheetBehavior
+                            .STATE_EXPANDED
             );
         }
     }
 
-    private void loadEventData() {
-        db.collection("events")
-                .document(eventId)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (!isAdded()
-                            || doc == null
-                            || !doc.exists()) {
-                        return;
-                    }
 
-                    populateViews(doc);
-                    loadCommunityPreview();
-                });
+    private void loadEventData() {
+
+        db.collection(
+                        "events"
+                )
+                .document(
+                        eventId
+                )
+                .get()
+                .addOnSuccessListener(
+                        doc -> {
+
+                            if (
+                                    !isAdded()
+                                            || doc == null
+                                            || !doc.exists()
+                            ) {
+
+                                return;
+                            }
+
+                            populateViews(
+                                    doc
+                            );
+
+                            loadCommunityPreview();
+                        }
+                );
     }
 
-    private void populateViews(DocumentSnapshot doc) {
-        showEventPhoto(doc);
 
-        String category = doc.getString("category");
-        tvTitle.setText(formatCategory(category));
+    private void populateViews(
+            DocumentSnapshot doc
+    ) {
 
-        Double severity = doc.getDouble("averageSeverity");
+        showEventPhoto(
+                doc
+        );
 
-        if (severity != null) {
-            String severityText =
-                    getSeverityLabel(severity)
+        String category =
+                doc.getString(
+                        "category"
+                );
+
+        tvTitle.setText(
+                formatCategory(
+                        category
+                )
+        );
+
+        Double severity =
+                doc.getDouble(
+                        "averageSeverity"
+                );
+
+        if (
+                severity != null
+        ) {
+
+            tvSeverityBadge.setText(
+                    getSeverityLabel(
+                            severity
+                    )
                             + " • "
                             + String.format(
                             Locale.getDefault(),
                             "%.1f",
                             severity
-                    );
-
-            tvSeverityBadge.setText(severityText);
+                    )
+            );
 
             setSeverityBadgeColor(
-                    getSeverityColor(severity)
+                    getSeverityColor(
+                            severity
+                    )
             );
+
         } else {
-            tvSeverityBadge.setText("Not rated");
-            setSeverityBadgeColor(0xFF9CA3AF);
+
+            tvSeverityBadge.setText(
+                    "Not rated"
+            );
+
+            setSeverityBadgeColor(
+                    0xFF9CA3AF
+            );
         }
 
-        Double lat = doc.getDouble("latitude");
-        Double lng = doc.getDouble("longitude");
+        Double lat =
+                doc.getDouble(
+                        "latitude"
+                );
 
-        if (lat != null && lng != null) {
-            reverseGeocode(lat, lng);
+        Double lng =
+                doc.getDouble(
+                        "longitude"
+                );
+
+        if (
+                lat != null
+                        && lng != null
+        ) {
+
+            reverseGeocode(
+                    lat,
+                    lng
+            );
+
         } else {
-            tvAddress.setText("Location unavailable");
+
+            tvAddress.setText(
+                    "Location unavailable"
+            );
         }
 
         com.google.firebase.Timestamp createdAt =
-                doc.getTimestamp("createdAt");
+                doc.getTimestamp(
+                        "createdAt"
+                );
 
-        if (createdAt != null) {
+        if (
+                createdAt != null
+        ) {
+
             tvTimeAgo.setText(
                     "Posted "
                             + formatTimeAgo(
                             createdAt.toDate()
                     )
             );
+
         } else {
+
             tvTimeAgo.setText(
                     "Posted date unavailable"
             );
         }
 
         showUniqueReportCount(
-                doc.getLong("uniqueUserCount")
+                doc.getLong(
+                        "uniqueUserCount"
+                )
         );
 
-        Long voteScore = doc.getLong("voteScore");
+        Long voteScore =
+                doc.getLong(
+                        "voteScore"
+                );
 
-        currentVoteScore = voteScore != null
-                ? voteScore.intValue()
-                : 0;
+        currentVoteScore =
+                voteScore != null
+                        ? voteScore.intValue()
+                        : 0;
 
         tvVoteScore.setText(
-                String.valueOf(currentVoteScore)
+                String.valueOf(
+                        currentVoteScore
+                )
         );
 
         Long commentCount =
-                doc.getLong("commentCount");
+                doc.getLong(
+                        "commentCount"
+                );
 
-        if (commentCount != null) {
-            showCommentCount(commentCount);
+        if (
+                commentCount != null
+        ) {
+
+            showCommentCount(
+                    commentCount
+            );
+
         } else {
+
             loadCommentCountFallback();
         }
     }
 
+
     private void showUniqueReportCount(
             Long uniqueUserCount
     ) {
-        if (uniqueUserCount == null
-                || uniqueUserCount <= 0) {
-            tvUniqueReports.setVisibility(View.GONE);
+
+        if (
+                uniqueUserCount == null
+                        || uniqueUserCount <= 0
+        ) {
+
+            tvUniqueReports.setVisibility(
+                    View.GONE
+            );
+
             return;
         }
 
-        String label = uniqueUserCount == 1
-                ? "• 1 unique report"
-                : "• "
-                  + uniqueUserCount
-                  + " unique reports";
+        String label =
+                uniqueUserCount == 1
+                        ? "• 1 unique report"
+                        : "• "
+                          + uniqueUserCount
+                          + " unique reports";
 
-        tvUniqueReports.setText(label);
-        tvUniqueReports.setVisibility(View.VISIBLE);
+        tvUniqueReports.setText(
+                label
+        );
+
+        tvUniqueReports.setVisibility(
+                View.VISIBLE
+        );
     }
 
+
     @SuppressWarnings("unchecked")
-    private void showEventPhoto(DocumentSnapshot doc) {
+    private void showEventPhoto(
+            DocumentSnapshot doc
+    ) {
+
         List<String> photos =
-                (List<String>) doc.get("photoGallery");
+                (List<String>)
+                        doc.get(
+                                "photoGallery"
+                        );
 
-        tvPhotoCount.setVisibility(View.GONE);
+        tvPhotoCount.setVisibility(
+                View.GONE
+        );
 
-        if (photos != null && !photos.isEmpty()) {
-            ivPhoto.setVisibility(View.VISIBLE);
-            layoutNoImage.setVisibility(View.GONE);
+        if (
+                photos != null
+                        && !photos.isEmpty()
+        ) {
+
+            ivPhoto.setVisibility(
+                    View.VISIBLE
+            );
+
+            layoutNoImage.setVisibility(
+                    View.GONE
+            );
 
             String newestPhotoUrl =
-                    photos.get(photos.size() - 1);
+                    photos.get(
+                            photos.size() - 1
+                    );
 
-            Glide.with(this)
-                    .load(newestPhotoUrl)
+            Glide.with(
+                            this
+                    )
+                    .load(
+                            newestPhotoUrl
+                    )
                     .centerCrop()
-                    .into(ivPhoto);
+                    .into(
+                            ivPhoto
+                    );
 
-            tvPhotoCount.setVisibility(View.VISIBLE);
+            tvPhotoCount.setVisibility(
+                    View.VISIBLE
+            );
 
             tvPhotoCount.setText(
                     photos.size() == 1
@@ -303,15 +579,28 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                               + photos.size()
                               + " photos"
             );
+
         } else {
-            ivPhoto.setVisibility(View.GONE);
-            layoutNoImage.setVisibility(View.VISIBLE);
+
+            ivPhoto.setVisibility(
+                    View.GONE
+            );
+
+            layoutNoImage.setVisibility(
+                    View.VISIBLE
+            );
         }
     }
 
-    private void setSeverityBadgeColor(int color) {
-        if (tvSeverityBadge.getBackground()
-                instanceof GradientDrawable) {
+
+    private void setSeverityBadgeColor(
+            int color
+    ) {
+
+        if (
+                tvSeverityBadge.getBackground()
+                        instanceof GradientDrawable
+        ) {
 
             GradientDrawable background =
                     (GradientDrawable)
@@ -319,14 +608,24 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                                     .getBackground()
                                     .mutate();
 
-            background.setColor(color);
+            background.setColor(
+                    color
+            );
         }
     }
 
+
     private void loadCommunityPreview() {
-        db.collection("events")
-                .document(eventId)
-                .collection("comments")
+
+        db.collection(
+                        "events"
+                )
+                .document(
+                        eventId
+                )
+                .collection(
+                        "comments"
+                )
                 .orderBy(
                         "heartCount",
                         Query.Direction.DESCENDING
@@ -335,73 +634,133 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                         "createdAt",
                         Query.Direction.DESCENDING
                 )
-                .limit(1)
+                .limit(
+                        1
+                )
                 .get()
-                .addOnSuccessListener(snapshot -> {
-                    if (!isAdded()) {
-                        return;
-                    }
+                .addOnSuccessListener(
+                        snapshot -> {
 
-                    if (snapshot.isEmpty()) {
-                        loadNewestCommentPreview();
-                    } else {
-                        showPreviewComment(
-                                snapshot
-                                        .getDocuments()
-                                        .get(0)
-                        );
-                    }
-                })
-                .addOnFailureListener(error -> {
-                    if (isAdded()) {
-                        loadNewestCommentPreview();
-                    }
-                });
+                            if (
+                                    !isAdded()
+                            ) {
+
+                                return;
+                            }
+
+                            if (
+                                    snapshot.isEmpty()
+                            ) {
+
+                                loadNewestCommentPreview();
+
+                            } else {
+
+                                showPreviewComment(
+                                        snapshot
+                                                .getDocuments()
+                                                .get(0)
+                                );
+                            }
+                        }
+                )
+                .addOnFailureListener(
+                        error -> {
+
+                            if (
+                                    isAdded()
+                            ) {
+
+                                loadNewestCommentPreview();
+                            }
+                        }
+                );
     }
 
+
     private void loadNewestCommentPreview() {
-        db.collection("events")
-                .document(eventId)
-                .collection("comments")
+
+        db.collection(
+                        "events"
+                )
+                .document(
+                        eventId
+                )
+                .collection(
+                        "comments"
+                )
                 .orderBy(
                         "createdAt",
                         Query.Direction.DESCENDING
                 )
-                .limit(1)
+                .limit(
+                        1
+                )
                 .get()
-                .addOnSuccessListener(snapshot -> {
-                    if (!isAdded()) {
-                        return;
-                    }
+                .addOnSuccessListener(
+                        snapshot -> {
 
-                    if (snapshot.isEmpty()) {
-                        showNoCommentsState(
-                                "No comments yet — start the conversation"
-                        );
-                    } else {
-                        showPreviewComment(
-                                snapshot
-                                        .getDocuments()
-                                        .get(0)
-                        );
-                    }
-                })
-                .addOnFailureListener(error -> {
-                    if (isAdded()) {
-                        showNoCommentsState(
-                                "Could not load community comments"
-                        );
-                    }
-                });
+                            if (
+                                    !isAdded()
+                            ) {
+
+                                return;
+                            }
+
+                            if (
+                                    snapshot.isEmpty()
+                            ) {
+
+                                showNoCommentsState(
+                                        "No comments yet — start the conversation"
+                                );
+
+                            } else {
+
+                                showPreviewComment(
+                                        snapshot
+                                                .getDocuments()
+                                                .get(0)
+                                );
+                            }
+                        }
+                )
+                .addOnFailureListener(
+                        error -> {
+
+                            if (
+                                    isAdded()
+                            ) {
+
+                                showNoCommentsState(
+                                        "Could not load community comments"
+                                );
+                            }
+                        }
+                );
     }
+
 
     private void showPreviewComment(
             DocumentSnapshot comment
     ) {
-        String status = comment.getString("status");
 
-        if ("deleted".equalsIgnoreCase(status)
-                || "hidden".equalsIgnoreCase(status)) {
+        String status =
+                comment.getString(
+                        "status"
+                );
+
+        if (
+                "deleted"
+                        .equalsIgnoreCase(
+                                status
+                        )
+
+                        || "hidden"
+                        .equalsIgnoreCase(
+                                status
+                        )
+        ) {
 
             showNoCommentsState(
                     "No comments yet — start the conversation"
@@ -410,26 +769,47 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
             return;
         }
 
-        String text = comment.getString("text");
+        String text =
+                comment.getString(
+                        "text"
+                );
 
-        Boolean isAnonymous =
-                comment.getBoolean("isAnonymous");
+        boolean isAnonymous =
+                Boolean.TRUE.equals(
+                        comment.getBoolean(
+                                "isAnonymous"
+                        )
+                );
 
         String displayName =
-                comment.getString("displayName");
+                comment.getString(
+                        "displayName"
+                );
 
         String userId =
-                comment.getString("userId");
+                comment.getString(
+                        "userId"
+                );
+
+        String pfpUrl =
+                comment.getString(
+                        "pfpUrl"
+                );
 
         com.google.firebase.Timestamp commentTime =
-                comment.getTimestamp("createdAt");
+                comment.getTimestamp(
+                        "createdAt"
+                );
 
         Long storedHeartCount =
-                comment.getLong("heartCount");
+                comment.getLong(
+                        "heartCount"
+                );
 
-        long heartCount = storedHeartCount == null
-                ? 0
-                : storedHeartCount;
+        long heartCount =
+                storedHeartCount == null
+                        ? 0
+                        : storedHeartCount;
 
         layoutCommentAuthor.setVisibility(
                 View.VISIBLE
@@ -450,75 +830,224 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                 )
         );
 
-        if (heartCount > 0) {
+        if (
+                heartCount > 0
+        ) {
+
             tvCommentHearts.setText(
-                    "♥ " + heartCount
+                    "♥ "
+                            + heartCount
             );
 
             tvCommentHearts.setVisibility(
                     View.VISIBLE
             );
+
         } else {
+
             tvCommentHearts.setVisibility(
                     View.GONE
             );
         }
 
-        if (Boolean.TRUE.equals(isAnonymous)) {
-            showAnonymousCommentAuthor();
-        } else if (displayName != null
-                && !displayName.trim().isEmpty()) {
+        if (
+                isAnonymous
+        ) {
 
             showCommentAuthor(
-                    displayName.trim()
+                    "Anonymous",
+                    null
             );
-        } else if (userId != null
-                && !userId.trim().isEmpty()) {
 
-            loadCommentUser(userId);
-        } else {
-            showCommentAuthor(
-                    "Community member"
-            );
+            return;
         }
+
+        if (
+                displayName == null
+                        || displayName.trim().isEmpty()
+        ) {
+
+            if (
+                    userId != null
+                            && userId.equals(
+                            auth.getUid()
+                    )
+                            && auth.getCurrentUser() != null
+                            && auth.getCurrentUser()
+                            .getDisplayName() != null
+            ) {
+
+                displayName =
+                        auth.getCurrentUser()
+                                .getDisplayName();
+
+            } else {
+
+                displayName =
+                        "Community member";
+            }
+        }
+
+        if (
+                (
+                        pfpUrl == null
+                                || pfpUrl.trim().isEmpty()
+                )
+                        && userId != null
+                        && userId.equals(
+                        auth.getUid()
+                )
+                        && auth.getCurrentUser() != null
+                        && auth.getCurrentUser()
+                        .getPhotoUrl() != null
+        ) {
+
+            pfpUrl =
+                    auth.getCurrentUser()
+                            .getPhotoUrl()
+                            .toString();
+        }
+
+        showCommentAuthor(
+                displayName,
+                pfpUrl
+        );
     }
+
+
+    private void showCommentAuthor(
+            String name,
+            @Nullable String pfpUrl
+    ) {
+
+        String safeName =
+                name == null
+                        || name.trim().isEmpty()
+                        ? "Community member"
+                        : name.trim();
+
+        tvCommentUser.setText(
+                safeName
+        );
+
+        if (
+                pfpUrl != null
+                        && !pfpUrl.trim().isEmpty()
+        ) {
+
+            tvCommentAvatar.setVisibility(
+                    View.GONE
+            );
+
+            ivCommentAvatar.setVisibility(
+                    View.VISIBLE
+            );
+
+            Glide.with(
+                            this
+                    )
+                    .load(
+                            pfpUrl.trim()
+                    )
+                    .circleCrop()
+                    .into(
+                            ivCommentAvatar
+                    );
+
+            return;
+        }
+
+        Glide.with(
+                this
+        ).clear(
+                ivCommentAvatar
+        );
+
+        ivCommentAvatar.setVisibility(
+                View.GONE
+        );
+
+        tvCommentAvatar.setVisibility(
+                View.VISIBLE
+        );
+
+        tvCommentAvatar.setText(
+                String.valueOf(
+                                safeName.charAt(
+                                        0
+                                )
+                        )
+                        .toUpperCase(
+                                Locale.getDefault()
+                        )
+        );
+    }
+
 
     private void loadCommentCountFallback() {
-        db.collection("events")
-                .document(eventId)
-                .collection("comments")
+
+        db.collection(
+                        "events"
+                )
+                .document(
+                        eventId
+                )
+                .collection(
+                        "comments"
+                )
                 .count()
-                .get(AggregateSource.SERVER)
-                .addOnSuccessListener(result -> {
-                    if (isAdded()) {
-                        showCommentCount(
-                                result.getCount()
-                        );
-                    }
-                })
-                .addOnFailureListener(error -> {
-                    if (isAdded()) {
-                        tvCommentCount.setText(
-                                "Comments  ›"
-                        );
-                    }
-                });
+                .get(
+                        AggregateSource.SERVER
+                )
+                .addOnSuccessListener(
+                        result -> {
+
+                            if (
+                                    isAdded()
+                            ) {
+
+                                showCommentCount(
+                                        result.getCount()
+                                );
+                            }
+                        }
+                )
+                .addOnFailureListener(
+                        error -> {
+
+                            if (
+                                    isAdded()
+                            ) {
+
+                                tvCommentCount.setText(
+                                        "Comments  ›"
+                                );
+                            }
+                        }
+                );
     }
 
-    private void showCommentCount(long count) {
+
+    private void showCommentCount(
+            long count
+    ) {
+
         tvCommentCount.setText(
                 (
                         count == 1
                                 ? "1 comment"
-                                : count + " comments"
+                                : count
+                                  + " comments"
                 )
                         + "  ›"
         );
     }
 
+
     private void showNoCommentsState(
             String message
     ) {
+
         layoutCommentAuthor.setVisibility(
                 View.GONE
         );
@@ -527,144 +1056,179 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                 View.GONE
         );
 
-        tvCommentText.setText(message);
-    }
-
-    private void openPhotosPage() {
-        if (eventId == null
-                || !(requireActivity()
-                instanceof MainActivity)) {
-            return;
-        }
-
-        dismiss();
-
-        ((MainActivity) requireActivity())
-                .openEventPhotos(eventId);
-    }
-
-    private void openCommentsPage() {
-        if (eventId == null
-                || !(requireActivity()
-                instanceof MainActivity)) {
-            return;
-        }
-
-        dismiss();
-
-        ((MainActivity) requireActivity())
-                .openEventComments(eventId);
-    }
-
-    private void showAnonymousCommentAuthor() {
-        showCommentAuthor("Anonymous");
-    }
-
-    private void showCommentAuthor(String name) {
-        String safeName =
-                name == null
-                        || name.trim().isEmpty()
-                        ? "Community member"
-                        : name.trim();
-
-        tvCommentUser.setText(safeName);
-
-        tvCommentAvatar.setText(
-                String.valueOf(
-                                safeName.charAt(0)
-                        )
-                        .toUpperCase(
-                                Locale.getDefault()
-                        )
+        tvCommentText.setText(
+                message
         );
     }
 
-    private void loadCommentUser(String uid) {
-        db.collection("users")
-                .document(uid)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (!isAdded()) {
-                        return;
-                    }
 
-                    String name =
-                            doc.getString("displayName");
+    private void openPhotosPage() {
 
-                    showCommentAuthor(name);
-                })
-                .addOnFailureListener(error -> {
-                    if (isAdded()) {
-                        showCommentAuthor(
-                                "Community member"
-                        );
-                    }
-                });
+        if (
+                eventId == null
+                        || !(requireActivity()
+                        instanceof MainActivity)
+        ) {
+
+            return;
+        }
+
+        dismiss();
+
+        ((MainActivity)
+                requireActivity())
+                .openEventPhotos(
+                        eventId
+                );
     }
+
+
+    private void openCommentsPage() {
+
+        if (
+                eventId == null
+                        || !(requireActivity()
+                        instanceof MainActivity)
+        ) {
+
+            return;
+        }
+
+        dismiss();
+
+        ((MainActivity)
+                requireActivity())
+                .openEventComments(
+                        eventId
+                );
+    }
+
 
     private void loadUserVote() {
-        String uid = auth.getUid();
 
-        if (uid == null) {
+        String uid =
+                auth.getUid();
+
+        if (
+                uid == null
+        ) {
+
             return;
         }
 
-        db.collection("events")
-                .document(eventId)
-                .collection("votes")
-                .document(uid)
+        db.collection(
+                        "events"
+                )
+                .document(
+                        eventId
+                )
+                .collection(
+                        "votes"
+                )
+                .document(
+                        uid
+                )
                 .get()
-                .addOnSuccessListener(doc -> {
-                    if (!isAdded()
-                            || !doc.exists()) {
-                        return;
-                    }
+                .addOnSuccessListener(
+                        doc -> {
 
-                    Long vote =
-                            doc.getLong("vote");
+                            if (
+                                    !isAdded()
+                                            || !doc.exists()
+                            ) {
 
-                    if (vote != null) {
-                        userVote = vote.intValue();
-                        updateVoteButtonStyles();
-                    }
-                });
+                                return;
+                            }
+
+                            Long vote =
+                                    doc.getLong(
+                                            "vote"
+                                    );
+
+                            if (
+                                    vote != null
+                            ) {
+
+                                userVote =
+                                        vote.intValue();
+
+                                updateVoteButtonStyles();
+                            }
+                        }
+                );
     }
 
-    private void castVote(int vote) {
-        String uid = auth.getUid();
 
-        if (uid == null) {
+    private void castVote(
+            int vote
+    ) {
+
+        String uid =
+                auth.getUid();
+
+        if (
+                uid == null
+        ) {
+
             return;
         }
 
-        int previousVote = userVote;
+        int previousVote =
+                userVote;
+
         int scoreDelta;
 
-        if (userVote == vote) {
-            userVote = 0;
-            scoreDelta = -vote;
-        } else {
-            scoreDelta =
-                    vote - previousVote;
+        if (
+                userVote == vote
+        ) {
 
-            userVote = vote;
+            userVote =
+                    0;
+
+            scoreDelta =
+                    -vote;
+
+        } else {
+
+            scoreDelta =
+                    vote
+                            - previousVote;
+
+            userVote =
+                    vote;
         }
 
-        currentVoteScore += scoreDelta;
+        currentVoteScore +=
+                scoreDelta;
 
         tvVoteScore.setText(
-                String.valueOf(currentVoteScore)
+                String.valueOf(
+                        currentVoteScore
+                )
         );
 
         updateVoteButtonStyles();
 
-        if (userVote == 0) {
-            db.collection("events")
-                    .document(eventId)
-                    .collection("votes")
-                    .document(uid)
+        if (
+                userVote == 0
+        ) {
+
+            db.collection(
+                            "events"
+                    )
+                    .document(
+                            eventId
+                    )
+                    .collection(
+                            "votes"
+                    )
+                    .document(
+                            uid
+                    )
                     .delete();
+
         } else {
+
             Map<String, Object> voteData =
                     new HashMap<>();
 
@@ -678,15 +1242,29 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                     com.google.firebase.Timestamp.now()
             );
 
-            db.collection("events")
-                    .document(eventId)
-                    .collection("votes")
-                    .document(uid)
-                    .set(voteData);
+            db.collection(
+                            "events"
+                    )
+                    .document(
+                            eventId
+                    )
+                    .collection(
+                            "votes"
+                    )
+                    .document(
+                            uid
+                    )
+                    .set(
+                            voteData
+                    );
         }
 
-        db.collection("events")
-                .document(eventId)
+        db.collection(
+                        "events"
+                )
+                .document(
+                        eventId
+                )
                 .update(
                         "voteScore",
                         FieldValue.increment(
@@ -695,7 +1273,9 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
                 );
     }
 
+
     private void updateVoteButtonStyles() {
+
         int activeColor =
                 requireContext()
                         .getColor(
@@ -727,86 +1307,124 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
         );
     }
 
+
     private void reverseGeocode(
             double lat,
             double lng
     ) {
-        new Thread(() -> {
-            try {
-                android.location.Geocoder geocoder =
-                        new android.location.Geocoder(
-                                requireContext(),
-                                Locale.getDefault()
-                        );
 
-                List<android.location.Address> addresses =
-                        geocoder.getFromLocation(
-                                lat,
-                                lng,
-                                1
-                        );
+        new Thread(
+                () -> {
 
-                String address = null;
+                    try {
 
-                if (addresses != null
-                        && !addresses.isEmpty()) {
-
-                    address = addresses
-                            .get(0)
-                            .getAddressLine(0);
-                }
-
-                final String resolvedAddress =
-                        address == null
-                                || address.trim().isEmpty()
-                                ? String.format(
-                                Locale.getDefault(),
-                                "%.5f, %.5f",
-                                lat,
-                                lng
-                        )
-                                : address;
-
-                requireActivity()
-                        .runOnUiThread(() -> {
-                            if (isAdded()) {
-                                tvAddress.setText(
-                                        resolvedAddress
+                        android.location.Geocoder geocoder =
+                                new android.location.Geocoder(
+                                        requireContext(),
+                                        Locale.getDefault()
                                 );
-                            }
-                        });
 
-            } catch (Exception error) {
-                final String coordinates =
-                        String.format(
-                                Locale.getDefault(),
-                                "%.5f, %.5f",
-                                lat,
-                                lng
-                        );
+                        List<android.location.Address> addresses =
+                                geocoder.getFromLocation(
+                                        lat,
+                                        lng,
+                                        1
+                                );
 
-                if (isAdded()) {
-                    requireActivity()
-                            .runOnUiThread(() -> {
-                                if (isAdded()) {
-                                    tvAddress.setText(
-                                            coordinates
+                        String address =
+                                null;
+
+                        if (
+                                addresses != null
+                                        && !addresses.isEmpty()
+                        ) {
+
+                            address =
+                                    addresses
+                                            .get(0)
+                                            .getAddressLine(
+                                                    0
+                                            );
+                        }
+
+                        final String resolvedAddress =
+                                address == null
+                                        || address.trim().isEmpty()
+                                        ? String.format(
+                                        Locale.getDefault(),
+                                        "%.5f, %.5f",
+                                        lat,
+                                        lng
+                                )
+                                        : address;
+
+                        requireActivity()
+                                .runOnUiThread(
+                                        () -> {
+
+                                            if (
+                                                    isAdded()
+                                            ) {
+
+                                                tvAddress.setText(
+                                                        resolvedAddress
+                                                );
+                                            }
+                                        }
+                                );
+
+                    } catch (
+                            Exception error
+                    ) {
+
+                        final String coordinates =
+                                String.format(
+                                        Locale.getDefault(),
+                                        "%.5f, %.5f",
+                                        lat,
+                                        lng
+                                );
+
+                        if (
+                                isAdded()
+                        ) {
+
+                            requireActivity()
+                                    .runOnUiThread(
+                                            () -> {
+
+                                                if (
+                                                        isAdded()
+                                                ) {
+
+                                                    tvAddress.setText(
+                                                            coordinates
+                                                    );
+                                                }
+                                            }
                                     );
-                                }
-                            });
+                        }
+                    }
                 }
-            }
-        }).start();
+        ).start();
     }
+
 
     private String formatCategory(
             String category
     ) {
-        if (category == null) {
+
+        if (
+                category == null
+        ) {
+
             return "Community Report";
         }
 
-        switch (category) {
+        switch (
+                category
+        ) {
+
             case "ROAD":
                 return "Road Issue";
 
@@ -827,100 +1445,168 @@ public class EventPopupFragment extends BottomSheetDialogFragment {
         }
     }
 
+
     private String getSeverityLabel(
             double severity
     ) {
-        if (severity <= 3) {
+
+        if (
+                severity <= 3
+        ) {
+
             return "Low";
         }
 
-        if (severity <= 6) {
+        if (
+                severity <= 6
+        ) {
+
             return "Moderate";
         }
 
-        if (severity <= 9) {
+        if (
+                severity <= 9
+        ) {
+
             return "High";
         }
 
         return "Critical";
     }
 
+
     private int getSeverityColor(
             Double severity
     ) {
-        if (severity == null) {
+
+        if (
+                severity == null
+        ) {
+
             return 0xFF9CA3AF;
         }
 
-        if (severity <= 3) {
+        if (
+                severity <= 3
+        ) {
+
             return 0xFF4CAF50;
         }
 
-        if (severity <= 6) {
+        if (
+                severity <= 6
+        ) {
+
             return 0xFFFFC107;
         }
 
-        if (severity <= 9) {
+        if (
+                severity <= 9
+        ) {
+
             return 0xFFFF5722;
         }
 
         return 0xFFF44336;
     }
 
-    private String formatTimeAgo(Date date) {
-        long diff = Math.max(
-                0,
-                System.currentTimeMillis()
-                        - date.getTime()
-        );
+
+    private String formatTimeAgo(
+            Date date
+    ) {
+
+        long diff =
+                Math.max(
+                        0,
+                        System.currentTimeMillis()
+                                - date.getTime()
+                );
 
         long minutes =
-                diff / (60 * 1000);
+                diff
+                        / (
+                        60
+                                * 1000
+                );
 
         long hours =
-                diff / (60 * 60 * 1000);
+                diff
+                        / (
+                        60
+                                * 60
+                                * 1000
+                );
 
         long days =
-                diff / (24 * 60 * 60 * 1000);
+                diff
+                        / (
+                        24
+                                * 60
+                                * 60
+                                * 1000
+                );
 
-        if (minutes < 1) {
+        if (
+                minutes < 1
+        ) {
+
             return "just now";
         }
 
-        if (minutes < 60) {
+        if (
+                minutes < 60
+        ) {
+
             return pluralize(
                     minutes,
                     "minute"
-            ) + " ago";
+            )
+                    + " ago";
         }
 
-        if (hours < 24) {
+        if (
+                hours < 24
+        ) {
+
             return pluralize(
                     hours,
                     "hour"
-            ) + " ago";
+            )
+                    + " ago";
         }
 
-        if (days < 7) {
+        if (
+                days < 7
+        ) {
+
             return pluralize(
                     days,
                     "day"
-            ) + " ago";
+            )
+                    + " ago";
         }
 
         return new SimpleDateFormat(
                 "MMM d, yyyy",
                 Locale.getDefault()
-        ).format(date);
+        ).format(
+                date
+        );
     }
+
 
     private String pluralize(
             long value,
             String unit
     ) {
+
         return value
                 + " "
                 + unit
-                + (value == 1 ? "" : "s");
+                + (
+                value == 1
+                        ? ""
+                        : "s"
+        );
     }
 }
