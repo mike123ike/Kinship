@@ -91,8 +91,7 @@ public final class ReportStatusUi {
                 normalize(status);
 
         return normalized.equals("ACTIVE")
-                || normalized.equals("IN_PROGRESS")
-                || normalized.equals("FIXED");
+                || normalized.equals("IN_PROGRESS");
     }
 
     public static String getExplanationTitle(
