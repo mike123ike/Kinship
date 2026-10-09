@@ -3,6 +3,8 @@
 <resources>
 
     <string name="app_name">Kinship</string>
+    <string name="severity_info_description">About the severity scale</string>
+    <string name="severity_scale_help"><b>1</b> &#8212; Minor issue with little impact.\n\n<b>10</b> &#8212; Life-threatening or potentially fatal.</string>
 
     <string name="brand_logo_description">Kinship logo</string>
 

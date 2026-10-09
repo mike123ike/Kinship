@@ -350,6 +350,16 @@
                         android:textColor="@color/tertiary"
                         android:textSize="15sp"
                         android:textStyle="bold" />
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/btn_severity_info"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/severity_info_description"
+                        android:padding="14dp"
+                        android:src="@drawable/ic_info_outline"
+                        app:tint="@color/primary" />
                 </LinearLayout>
 
                 <RelativeLayout

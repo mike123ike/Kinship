@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -98,6 +99,7 @@ public class ReportFragment extends Fragment
     private AutoCompleteTextView dropdown;
 
     private Slider slider;
+    private PopupWindow severityTooltip;
 
     private TextView tvDescription;
 
@@ -155,6 +157,9 @@ public class ReportFragment extends Fragment
                         R.id.tv_severity_value
                 );
 
+
+        view.findViewById(R.id.btn_severity_info)
+                .setOnClickListener(this::showSeverityTooltip);
 
         slider.addOnChangeListener(
                 (
@@ -1823,6 +1828,46 @@ public class ReportFragment extends Fragment
     }
 
 
+    private void showSeverityTooltip(View anchor) {
+        dismissSeverityTooltip();
+        float density = getResources().getDisplayMetrics().density;
+        int width = Math.min((int) (280 * density),
+                getResources().getDisplayMetrics().widthPixels - (int) (32 * density));
+        View content = getLayoutInflater().inflate(R.layout.tooltip_severity, null);
+        severityTooltip = new PopupWindow(content, width,
+                ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        severityTooltip.setBackgroundDrawable(
+                androidx.core.content.ContextCompat.getDrawable(
+                        requireContext(), R.drawable.bg_severity_tooltip));
+        severityTooltip.setElevation(6 * density);
+        severityTooltip.setOutsideTouchable(true);
+        content.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int height = content.getMeasuredHeight();
+        severityTooltip.setHeight(height);
+        android.graphics.Rect visibleFrame = new android.graphics.Rect();
+        anchor.getWindowVisibleDisplayFrame(visibleFrame);
+        int[] anchorPosition = new int[2];
+        anchor.getLocationOnScreen(anchorPosition);
+        int centeredLeft = visibleFrame.left + (visibleFrame.width() - width) / 2;
+        severityTooltip.showAsDropDown(anchor, centeredLeft - anchorPosition[0],
+                -anchor.getHeight() - height - (int) (6 * density));
+    }
+
+    private void dismissSeverityTooltip() {
+        if (severityTooltip != null) {
+            severityTooltip.dismiss();
+            severityTooltip = null;
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        dismissSeverityTooltip();
+        super.onDestroyView();
+    }
+
     @Override
     public void onResume() {
 
@@ -1840,6 +1885,8 @@ public class ReportFragment extends Fragment
 
     @Override
     public void onPause() {
+
+        dismissSeverityTooltip();
 
         super.onPause();
 
