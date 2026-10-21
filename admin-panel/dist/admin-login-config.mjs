@@ -1,5 +1,4 @@
-// Username alias for the manually provisioned Firebase administrator.
-// No passwords or service-account credentials belong in this public file.
+//username alias for admin login
 export const adminLogin = {
   username: 'kinshipadmin',
   email: 'demo@kinship.com',

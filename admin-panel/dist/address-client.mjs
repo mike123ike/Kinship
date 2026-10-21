@@ -1,5 +1,3 @@
-// This owner-only panel uses one administrator browser. Web Locks serialize
-// its tabs; shared/multi-device use requires a proxy with an app-wide limiter.
 const cacheKey = 'kinship-address-cache-v1',
   rateKey = 'kinship-address-request-v1';
 const ttl = 30 * 86400000;
@@ -56,7 +54,6 @@ export async function lookupAddress(latitude, longitude, { signal } = {}) {
     if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
     signal?.throwIfAborted();
     lastRequest = Date.now();
-    // Fail closed if shared storage is blocked: tabs must share the rate limit.
     localStorage.setItem(rateKey, String(lastRequest));
     url.search = new URLSearchParams({
       format: 'jsonv2',
@@ -66,7 +63,6 @@ export async function lookupAddress(latitude, longitude, { signal } = {}) {
       addressdetails: '1',
       layer: 'address',
     });
-    // Browser Referer identifies this application; no Firebase IDs or tokens.
     const response = await fetch(url, {
       signal: requestSignal,
       credentials: 'omit',

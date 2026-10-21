@@ -136,9 +136,6 @@ async function restore() {
   }
 }
 
-// A fresh visit is immediately usable. Load the SDK for a submitted login or
-// when Firebase has a session to restore, rather than blocking the first form
-// on a third-party CDN request. This storage check grants no authorization.
 try {
   if (Object.keys(sessionStorage).some((key) => key.startsWith('firebase:authUser:'))) {
     restore();

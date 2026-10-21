@@ -139,9 +139,6 @@ export async function commitResolution(commit, readLatestEvent) {
   try {
     await commit();
   } catch (error) {
-    // Rules may reject a racing transaction before its optimistic retry runs.
-    // Read the server record to distinguish an already-resolved event from an
-    // actual authorization failure; keep the original error if that read fails.
     if (['permission-denied', 'aborted', 'failed-precondition'].includes(error?.code)) {
       let current;
       try {
