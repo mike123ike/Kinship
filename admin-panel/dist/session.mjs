@@ -5,8 +5,6 @@ export class AccessDeniedError extends Error {
   }
 }
 
-// A username is only an alias for Firebase credentials. The protected
-// Firestore role remains the source of administrator authorization.
 export async function signInAdministrator(
   username,
   password,
@@ -25,8 +23,6 @@ export async function signInAdministrator(
   return verifyAdministrator(user, readProfile, clearSession);
 }
 
-// This matches the protected role fields in the currently deployed rules.
-// Migrate this check alongside the rules when adopting admins/{uid}.
 export async function verifyAdministrator(user, readProfile, clearSession) {
   try {
     const profile = await readProfile(user.uid);
@@ -35,8 +31,6 @@ export async function verifyAdministrator(user, readProfile, clearSession) {
     }
     return { uid: user.uid, email: user.email || '' };
   } catch (error) {
-    // The caller never renders authorized UI on a failed check, including
-    // when clearing an invalid session fails because the network is down.
     await clearSession().catch(() => {});
     throw error;
   }
