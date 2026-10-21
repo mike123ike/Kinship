@@ -37,7 +37,6 @@ const ready = (async () => {
 })();
 
 async function readProfile(uid) {
-  // Server-only verification avoids authorizing from stale offline role data.
   const snapshot = await getDocFromServer(doc(db, 'users', uid));
   return snapshot.exists() ? snapshot.data() : null;
 }
@@ -65,7 +64,6 @@ export async function endSession() {
   await signOut(auth);
 }
 
-// Called only after the sign-in flow has verified the protected admin profile.
 export function watchEvents(onData, onError, onAccessLost) {
   let stopped = false,
     stopEvents = () => {},
@@ -163,8 +161,6 @@ export function watchComments(eventId, onData, onError) {
     if (!auth.currentUser || typeof eventId !== 'string' || !eventId || eventId.includes('/'))
       throw Object.assign(new Error('Sign in required'), { code: 'admin/access-denied' });
     if (stopped) return;
-    // A single-field query avoids a composite-index requirement. Exclude hidden
-    // and removed comments using their existing lifecycle field before rendering.
     unsubscribe = onSnapshot(
       query(collection(db, 'events', eventId, 'comments'), orderBy('createdAt', 'desc')),
       { includeMetadataChanges: true },

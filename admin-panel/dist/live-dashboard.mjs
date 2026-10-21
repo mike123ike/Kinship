@@ -523,7 +523,6 @@ export function mountDashboard(
     try {
       await client.markEventFixed(eventId);
       if (disposed) return;
-      // The transaction has been acknowledged; never show success for queued writes.
       confirming = false;
       $('.event-dialog').close();
       notice('Event marked as fixed. It is preserved in fixed history.');
