@@ -33,7 +33,7 @@
 
 
     <application
-        android:name=".CivicFixApp"
+        android:name=".KinshipApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
