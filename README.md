@@ -57,7 +57,7 @@ The dashboard is restricted to authorized administrators and uses the same Fireb
 ```mermaid
 flowchart TD
     A["Resident signs in with Google"] --> B["Submits a report with category, severity, description, location, and optional photo"]
-    B --> C{"Matching open event of the same category within about 322 m?"}
+    B --> C{"Matching open event of the same category within about 0.2 mi"}
     C -->|Yes| D["Add a report from a new user to the existing event"]
     C -->|No| E["Create a pending event"]
     D --> F["Update unique reporter count and average severity"]
