@@ -17,7 +17,7 @@ val localProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.pkg.civicfix"
+    namespace = "com.pkg.kinship"
 
     compileSdk {
         version = release(36) {
